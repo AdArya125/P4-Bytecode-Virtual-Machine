@@ -138,3 +138,76 @@ VM {
 what we did in 1st commit
 so built a minimal VM hat can read instructions from memory, maintain execution state and manupulate stack, also stop deterministically
 
+1st commit I have added basic stack based execuituin model
+execution loop
+stack iperations with bound check
+arithmatic push, add
+modular file struture
+
+Plan ahead 
+Day 1 (today): Finish Core Arithmetic + Visibility
+
+Goal: strengthen VM core
+
+Tasks:
+
+Add SUB, MUL, DIV
+Add divide-by-zero check
+Add dump_stack() helper
+Optional -trace flag
+
+Why this matters:
+
+Solidifies stack discipline
+Makes debugging control flow easier
+Directly adds to Core VM marks
+
+Day 2: Control Flow + Memory
+
+Goal: programs that branch and loop
+
+Tasks:
+Implement JMP, JZ
+Add globals[]
+Implement LOAD idx, STORE idx
+Write loop test (countdown, sum)
+
+Why this matters:
+Control flow is non-negotiable for marks
+Shows you understand PC manipulation
+
+Day 3: CALL / RET + Frames
+
+Goal: hardest concept, but limited scope
+
+Tasks:
+Use unified stack
+
+Implement:
+push return PC
+push old FP
+update FP
+Implement RET
+
+Test with:
+simple function
+nested calls
+Why this matters:
+This alone unlocks 2 marks in Core VM
+Strong viva differentiator
+
+Day 4: Assembler + Docs
+
+Goal: convert understanding into submission
+
+Tasks:
+
+Simple assembler:
+text → bytecode
+no labels initially (optional if time)
+3–4 test programs
+README
+Short technical report
+Why this matters:
+Easy marks if not rushed
+Makes demo smooth

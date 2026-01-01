@@ -20,11 +20,16 @@ instruction sets are contracts not code
 
 typedef enum {
     OP_PUSH = 0x01,   // PUSH <int32>
+    //-----Arithmatic---------
     OP_ADD  = 0x10,   // a + b
     OP_SUB  = 0x11,
     OP_MUL  = 0x12,
     OP_DIV  = 0x13,
+    //--------control flow-------
+    OP_JMP = 0x20, // works as JMP <addr> or JZ <addr>
+    OP_JZ = 0x021, 
 
+    OP_DUP= 0x03,
     OP_HALT = 0xFF
 } Opcode;
 

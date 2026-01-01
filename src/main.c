@@ -4,22 +4,91 @@
 
 int main() 
 {
+    //-------------Program 1 basic push, add------------
     //simply some machine code is added here later maybe will link to to a file from tests
-    uint8_t program[] = 
-    {
-        0x01, 10, 0, 0, 0,   // PUSH 10
-        0x01, 20, 0, 0, 0,   // PUSH 20
-        0x10,               // ADD
-        0xFF                // HALT
-        /*
-        Program:
-        PUSH 10
-        PUSH 20
-        ADD
-        HALT
-         */
+    // uint8_t program[] = 
+    // {
+    //     0x01, 10, 0, 0, 0,   // PUSH 10
+    //     0x01, 20, 0, 0, 0,   // PUSH 20
+    //     0x10,               // ADD
+    //     0xFF                // HALT
+    //     /*
+    //     Program:
+    //     PUSH 10
+    //     PUSH 20
+    //     ADD
+    //     HALT
+    //      */
 
+    // };
+    //--------program 2 multiply, div, sub--------------
+    // uint8_t program[] = {
+    //     0x01, 20, 0, 0, 0,  // PUSH 20
+    //     0x01, 5,  0, 0, 0,  // PUSH 5
+    //     0x11,               // SUB   -> 15
+    //     0x01, 3,  0, 0, 0,  // PUSH 3
+    //     0x12,               // MUL   -> 45
+    //     0x01, 9,  0, 0, 0,  // PUSH 9
+    //     0x13,               // DIV   -> 5
+    //     0xFF                // HALT
+    // };
+    //-------Program3 basic loop----------
+    uint8_t program[] = {
+        0x01, 1, 0, 0, 0,          //PUSH 
+        0x01, 1, 0, 0, 0,          //PUSH 
+        0x11,                     //SUB
+        0x03,                     //DUP
+        0x21, 22, 0, 0, 0,         //JZ end 
+        0x20, 5, 0, 0, 0,          //JMP loop 
+        0xFF                      //HALT
     };
+    /*
+    output explanation     : we are dumping stack after every sinngle instruction iteration and not loop iteration here
+STACK [size=1]: 3 
+STACK [size=2]: 3 1
+STACK [size=1]: 2
+STACK [size=2]: 2 2
+STACK [size=1]: 2
+STACK [size=1]: 2
+STACK [size=2]: 2 1
+STACK [size=1]: 1
+STACK [size=2]: 1 1
+STACK [size=1]: 1
+STACK [size=1]: 1
+STACK [size=2]: 1 1
+STACK [size=1]: 0
+STACK [size=2]: 0 0
+STACK [size=1]: 0
+STACK [size=1]: 0
+Result on stack: 0
+
+STACK [size=1]: 3
+After PUSH 3
+Stack holds x
+
+STACK [size=2]: 3 1
+PUSH 1
+
+Preparing for subtraction
+
+STACK [size=1]: 2
+SUB → 3 − 1 = 2
+
+x updated to 2
+STACK [size=2]: 2 2
+DUP
+
+One copy for condition check, one to keep x
+
+STACK [size=1]: 2
+JZ pops condition (2 ≠ 0 → no jump)
+
+STACK [size=1]: 2
+JMP back to loop start
+Stack intact
+    */
+
+
 
     VM vm;
     vm_init(&vm, program, sizeof(program));

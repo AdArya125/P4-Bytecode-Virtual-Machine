@@ -1,3 +1,4 @@
+//vm-> running = 0;  it is done in stack overflow, stackunderflow, unknown opcode, HALT instructions
 #include <stdio.h>
 #include <stdlib.h>
 #include "vm.h"
@@ -5,6 +6,15 @@
 
 #define STACK_MAX 1024 //for now keeping stack capacity as 1024
 
+//adding this part to show execution over stack
+static void vm_dump_stack(VM *vm) 
+{
+    printf("STACK [size=%u]: ", vm->sp);
+    for (uint32_t i = 0; i < vm->sp; i++) {
+        printf("%d ", vm->stack[i]);
+    }
+    printf("\n");
+}
 
 //basic push pop is done here with proper bound check
 static void vm_push(VM *vm, int32_t value) 
@@ -37,7 +47,7 @@ void vm_init(VM *vm, uint8_t *code, size_t code_size)
     vm->pc = 0;
 
     vm->stack_capacity = STACK_MAX;
-    vm->stack = malloc(sizeof(int32_t) * STACK_MAX);
+    vm->stack = malloc(sizeof(int32_t) * STACK_MAX);  //allocating stack to vm here
     vm->sp = 0;
     vm->fp = 0;
 
@@ -48,6 +58,7 @@ void vm_run(VM *vm)
 {
     while (vm->running) 
     {
+        //this if below will automatically prevent bad JMP,JZ as well as wrong PC values
         if (vm->pc >= vm->code_size) 
         {
             fprintf(stderr, "Runtime error: PC out of bounds\n");
@@ -68,25 +79,96 @@ void vm_run(VM *vm)
             vm_push(vm, value);
             break;
         
+        //--------------Arithmatic section here ----------------------
         // stack will be LIFO, order is done to mirror ALU semantics a+b and b+a is different for stack
-        case OP_ADD: 
+        case OP_ADD: {
             int32_t b = vm_pop(vm);
             int32_t a = vm_pop(vm);
             vm_push(vm, a + b);
             break;
+        }
+
+        case OP_SUB: {
+            int32_t b = vm_pop(vm);
+            int32_t a = vm_pop(vm);
+            vm_push(vm, a - b);
+            break;
+        }
+
+        case OP_MUL: {
+            int32_t b = vm_pop(vm);
+            int32_t a = vm_pop(vm);
+            vm_push(vm, a * b);
+            break;
+        }
+
+        case OP_DIV: {
+            int32_t b = vm_pop(vm);
+            int32_t a = vm_pop(vm);
         
+            if (b == 0) {
+                fprintf(stderr, "Runtime error: division by zero\n");
+                vm->running = 0;
+                break;
+            }
+        
+        
+            vm_push(vm, a / b);
+            break;
+        }
+        case OP_DUP: {
+            if (vm->sp == 0) {
+                fprintf(stderr, "Runtime error: DUP on empty stack\n");
+                vm->running = 0;
+                break;
+            }
+            int32_t v = vm->stack[vm->sp - 1];
+            vm_push(vm, v);
+            break;
+        }
+
+
+
+        //____________________________________________________________
+        //--------control flow here---------
+        case OP_JMP: {
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;          // consume operand
+            vm->pc = addr;        // jump
+            break;
+        }
+
+
+        case OP_JZ: {
+            // Operand: 4-byte absolute address
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+            
+            int32_t cond = vm_pop(vm);
+            if (cond == 0) {
+                vm->pc = addr;
+            }
+            //here however operand is part of instruction and if yhe condition is false execution continues after instruction
+            //if true PC is overridden
+            break;
+        }
+
+
         //simple stop done to avoid segfault and undefined behavious
         case OP_HALT:
-            vm->running = 0;
+            vm->running = 0; 
             break;
 
         default:
             fprintf(stderr, "Unknown opcode: 0x%02X\n", opcode);
             vm->running = 0;
         }
+        vm_dump_stack(vm); //added to show execution in stack what happens and how, for later part will guard with a flag
     }
 }
 
-void vm_free(VM *vm) {
+//freeing VM here
+void vm_free(VM *vm) 
+{
     free(vm->stack);
 }
