@@ -115,3 +115,26 @@ we will use modified harvard architecture
     - Why CALL cannot store return address in a single variable?
 we will use uint8_t to store code
 int32_t array for stack and global variables
+
+
+designing VM struct, what it should have 
+
+VM {
+    code, code size, pc [code will bein uint8_t, codesize in size_t, uint32_t for pc]
+    code owill be read only , uint8_t is used to ensure byte level instruction format
+    code size will be for bounds checking and loader validation
+    pc is unsigned : negative pc should be error so 0<=pc< codesize
+
+
+    stack, sp,fp [int32_t *stack, uint32_t sp,fp,stack_cap  ]
+    stack will be used to hold temporary values, return address, FP, locals
+    above is for unified stack design will implement 2 stack idea first
+
+    globals
+    running
+}
+
+
+what we did in 1st commit
+so built a minimal VM hat can read instructions from memory, maintain execution state and manupulate stack, also stop deterministically
+
