@@ -375,6 +375,50 @@ void vm_run(VM *vm)
             // EAT a 5 star and do nothing
             break;
 
+<<<<<<< Updated upstream
+=======
+        case OP_CALL: 
+        {
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+
+            // Push return address
+            vm_push(vm, vm->pc);
+
+            // Push old frame pointer
+            vm_push(vm, vm->fp);
+
+            // New frame starts here
+            vm->fp = vm->sp - 2;
+
+            // Jump to function
+            vm->pc = addr;
+            break;
+        }
+        case OP_RET: 
+        {
+            // 1. Pop return value (callee must have pushed it)
+            int32_t ret = vm_pop(vm);
+
+            // 2. Read saved frame data WITHOUT destroying stack yet
+            uint32_t old_fp = vm->stack[vm->fp + 1];
+            uint32_t ret_pc = vm->stack[vm->fp];
+
+            // 3. Restore stack pointer to caller frame
+            vm->sp = vm->fp;
+
+            // 4. Restore FP and PC
+            vm->fp = old_fp;
+            vm->pc = ret_pc;
+
+            // 5. Push return value for caller
+            vm_push(vm, ret);
+            break;
+        }
+
+
+
+>>>>>>> Stashed changes
         default:
             fprintf(stderr, "Unknown opcode: 0x%02X\n", opcode);
             vm->running = 0;

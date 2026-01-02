@@ -37,12 +37,12 @@ typedef enum {
     OP_DEC  = 0x17,
     /* Unary arithmetic */
     OP_NEG   = 0x18,
-    
+
     /* Comparisons */
     OP_EQ    = 0x19,
     OP_LT    = 0x1A,
     OP_GT    = 0x1B,
-    
+
     /* I/O / misc */
     OP_PRINT = 0x60,
     OP_NOP   = 0x00,
@@ -51,12 +51,15 @@ typedef enum {
 
     //--------control flow-------
     OP_JMP = 0x20, // works as JMP <addr> or JZ <addr>
-    OP_JZ = 0x021, 
+    OP_JZ = 0x21, 
 
     //-------Load/store-------
     OP_STORE = 0x30,   // STORE <idx>
     OP_LOAD  = 0x31,   // LOAD  <idx>
 
+    //-------CALL/RET----------
+    OP_CALL = 0x40,   // CALL <addr>
+    OP_RET  = 0x41,   // RET
 
     OP_HALT = 0xFF
 } Opcode;
