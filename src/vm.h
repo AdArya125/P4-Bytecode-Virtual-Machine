@@ -12,7 +12,8 @@ this file is for machine definition
 typedef struct VM 
 {
     /* Code part is defined here */
-   
+    uint64_t instr_count;
+
     uint8_t *code;
     size_t code_size;
     uint32_t pc;
@@ -22,9 +23,16 @@ typedef struct VM
     uint32_t sp; // next free slot
     uint32_t fp; // frame pointer (unused for now will change later)
     uint32_t stack_capacity;
+    
+    /* --- Global Data Segment --- */
+    int32_t  *globals;
+    uint32_t  globals_count;
 
     /* Execution state */
     int running;
+    //for debug of stack states
+    int trace;          // 0 = off, 1 = on
+
 } VM;
 
 /* VM lifecycle */

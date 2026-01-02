@@ -33,16 +33,61 @@ int main()
     //     0xFF                // HALT
     // };
     //-------Program3 basic loop----------
-    uint8_t program[] = {
-        0x01, 1, 0, 0, 0,          //PUSH 
-        0x01, 1, 0, 0, 0,          //PUSH 
-        0x11,                     //SUB
-        0x03,                     //DUP
-        0x21, 22, 0, 0, 0,         //JZ end 
-        0x20, 5, 0, 0, 0,          //JMP loop 
-        0xFF                      //HALT
+    // uint8_t program[] = {
+    //     0x01, 1, 0, 0, 0,          //PUSH 
+    //     0x01, 1, 0, 0, 0,          //PUSH 
+    //     0x11,                     //SUB
+    //     0x03,                     //DUP
+    //     0x21, 22, 0, 0, 0,         //JZ end 
+    //     0x20, 5, 0, 0, 0,          //JMP loop 
+    //     0xFF                      //HALT
+    // };
+    //-------pROGRAM 4 MINIMAL LOAD STORE--------
+    // uint8_t program[] = {
+    //     0x01, 42, 0, 0, 0,      // PUSH 42
+    //     0x30, 0,  0, 0, 0,      // STORE 0
+    //     0x01, 8,  0, 0, 0,      // PUSH 8
+    //     0x30, 1,  0, 0, 0,      // STORE 1
+    //     0x31, 0,  0, 0, 0,      // LOAD 0
+    //     0x31, 1,  0, 0, 0,      // LOAD 1
+    //     0x10,                  // ADD
+    //     0xFF                   // HALT
+    // };
+    //--------PROGRAM TEST FOR SWAP DROP OVER INC DEC
+    // uint8_t program[] = {
+    //     0x01, 10, 0, 0, 0,   // PUSH 10
+    //     0x01, 20, 0, 0, 0,   // PUSH 20
+    //     0x04,               // SWAP        -> [20,10]
+    //     0x06,               // OVER        -> [20,10,20]
+    //     0x05,               // DROP        -> [20,10]
+    //     0x17,               // DEC         -> [20,10]
+    //     0x16,               // INC         -> [20,11]
+    //     0xFF
+    // };
+    //-------program to test push, inc, dec, neg, eq, lt,nop
+    uint8_t program[] = 
+    {
+        0x01, 5, 0, 0, 0,     // PUSH 5
+        0x18,                // NEG        -> -5
+        0x16,                // INC        -> -4
+        0x17,                // DEC        -> -5
+
+        0x01, 5, 0, 0, 0,     // PUSH 5
+        0x19,                // EQ         -> 1
+
+        0x01, 3, 0, 0, 0,     // PUSH 3
+        0x1A,                // LT         -> 0 (1 < 3? careful!)
+        
+        0x60,                // PRINT      -> prints result
+        0x00,                // NOP
+        0xFF
     };
+//Repeated stack dumps with the same value do not mean repeated computation.
+//They mean no state change between instructions.
+
+
     /*
+    
     output explanation     : we are dumping stack after every sinngle instruction iteration and not loop iteration here
 STACK [size=1]: 3 
 STACK [size=2]: 3 1
@@ -92,8 +137,10 @@ Stack intact
 
     VM vm;
     vm_init(&vm, program, sizeof(program));
+    vm.trace = 1;   // turn ON to test
     vm_run(&vm); //at this point the PC moves, stack changes and CPU goes into running state
      
+    printf("Executed %lu instructions\n", vm.instr_count);
 
     if (vm.sp > 0) 
     {
