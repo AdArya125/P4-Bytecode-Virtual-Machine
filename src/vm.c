@@ -375,8 +375,6 @@ void vm_run(VM *vm)
             // EAT a 5 star and do nothing
             break;
 
-<<<<<<< Updated upstream
-=======
         case OP_CALL: 
         {
             uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
@@ -418,7 +416,6 @@ void vm_run(VM *vm)
 
 
 
->>>>>>> Stashed changes
         default:
             fprintf(stderr, "Unknown opcode: 0x%02X\n", opcode);
             vm->running = 0;

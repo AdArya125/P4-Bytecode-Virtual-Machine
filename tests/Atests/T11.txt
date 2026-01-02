@@ -1,0 +1,9 @@
+PUSH 5
+loop:
+PUSH 1
+SUB
+DUP
+JZ end
+JMP loop
+end:
+HALT

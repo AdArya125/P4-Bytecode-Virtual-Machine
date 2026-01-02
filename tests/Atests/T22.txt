@@ -1,0 +1,11 @@
+CALL a
+HALT
+a:
+CALL b
+RET
+b:
+CALL c
+RET
+c:
+PUSH 42
+RET

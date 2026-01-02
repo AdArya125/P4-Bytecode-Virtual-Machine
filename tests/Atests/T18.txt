@@ -1,0 +1,8 @@
+CALL f
+HALT
+f:
+CALL g
+RET
+g:
+PUSH 9
+RET

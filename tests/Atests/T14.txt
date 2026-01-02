@@ -1,0 +1,8 @@
+PUSH 0
+loop:
+INC
+DUP
+PUSH 5
+EQ
+JZ loop
+HALT

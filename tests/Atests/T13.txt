@@ -1,0 +1,10 @@
+PUSH 3
+PUSH 5
+LT
+JZ skip
+PUSH 1
+JMP end
+skip:
+PUSH 0
+end:
+HALT

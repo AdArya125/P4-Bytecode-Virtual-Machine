@@ -1,0 +1,5 @@
+CALL f
+HALT
+f:
+ADD
+RET

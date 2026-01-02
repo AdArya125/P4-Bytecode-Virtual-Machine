@@ -1,0 +1,12 @@
+PUSH 3
+loop:
+CALL dec
+DUP
+JZ end
+JMP loop
+end:
+HALT
+dec:
+PUSH 1
+SUB
+RET

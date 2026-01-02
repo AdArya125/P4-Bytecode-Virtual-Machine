@@ -1,0 +1,3 @@
+PUSH 99
+PRINT
+HALT

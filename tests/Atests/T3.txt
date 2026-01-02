@@ -1,0 +1,6 @@
+PUSH 5
+NEG
+INC
+DEC
+HALT
+

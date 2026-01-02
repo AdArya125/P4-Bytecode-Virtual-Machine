@@ -1,0 +1,634 @@
+That’s an **excellent move**.
+What you’re doing now is **exactly how real systems teams de-risk integration**:
+you define the *contract* via test programs **before** the assembler is finished.
+
+I’ll give you a **well-curated test suite** that:
+
+* Exercises **every instruction you have**
+* Gradually increases difficulty
+* Will immediately expose assembler or VM bugs
+* Is copy-paste friendly for Aditya
+* Is also reusable for your **demo + report**
+
+I’ll group them exactly as you asked:
+
+---
+
+# 🔹 EASY TESTS (10)
+
+*(Instruction correctness, no tricks)*
+
+These ensure the assembler basics are solid.
+
+---
+
+### **E1. Arithmetic sanity**
+
+```asm
+PUSH 10
+PUSH 20
+ADD
+HALT
+```
+
+Expected result: `30`
+
+---
+
+### **E2. Sub / Mul / Div**
+
+```asm
+PUSH 20
+PUSH 5
+SUB
+PUSH 3
+MUL
+PUSH 5
+DIV
+HALT
+```
+
+Expected result: `9`
+
+---
+
+### **E3. Unary ops**
+
+```asm
+PUSH 5
+NEG
+INC
+DEC
+HALT
+```
+
+Expected result: `-5`
+
+---
+
+### **E4. SWAP**
+
+```asm
+PUSH 1
+PUSH 2
+SWAP
+HALT
+```
+
+Expected stack: `[2, 1]`
+
+---
+
+### **E5. DROP**
+
+```asm
+PUSH 42
+DROP
+HALT
+```
+
+Expected stack: empty
+
+---
+
+### **E6. OVER**
+
+```asm
+PUSH 3
+PUSH 4
+OVER
+HALT
+```
+
+Expected stack: `[3, 4, 3]`
+
+---
+
+### **E7. EQ true**
+
+```asm
+PUSH 7
+PUSH 7
+EQ
+HALT
+```
+
+Expected result: `1`
+
+---
+
+### **E8. EQ false**
+
+```asm
+PUSH 7
+PUSH 8
+EQ
+HALT
+```
+
+Expected result: `0`
+
+---
+
+### **E9. PRINT**
+
+```asm
+PUSH 99
+PRINT
+HALT
+```
+
+Expected output: `PRINT: 99`
+
+---
+
+### **E10. NOP sanity**
+
+```asm
+PUSH 5
+NOP
+HALT
+```
+
+Expected result: `5`
+
+---
+
+# 🔹 MEDIUM TESTS (5)
+
+*(Control flow + memory, still readable)*
+
+---
+
+### **M1. Countdown loop**
+
+```asm
+PUSH 5
+loop:
+PUSH 1
+SUB
+DUP
+JZ end
+JMP loop
+end:
+HALT
+```
+
+Expected result: `0`
+
+---
+
+### **M2. LOAD / STORE**
+
+```asm
+PUSH 10
+STORE 0
+PUSH 20
+STORE 1
+LOAD 0
+LOAD 1
+ADD
+HALT
+```
+
+Expected result: `30`
+
+---
+
+### **M3. Conditional branch**
+
+```asm
+PUSH 3
+PUSH 5
+LT
+JZ skip
+PUSH 1
+JMP end
+skip:
+PUSH 0
+end:
+HALT
+```
+
+Expected result: `1`
+
+---
+
+### **M4. INC-based loop**
+
+```asm
+PUSH 0
+loop:
+INC
+DUP
+PUSH 5
+EQ
+JZ loop
+HALT
+```
+
+Expected result: `5`
+
+---
+
+### **M5. Boolean logic via comparisons**
+
+```asm
+PUSH 3
+PUSH 2
+GT
+PUSH 2
+PUSH 3
+LT
+ADD
+HALT
+```
+
+Expected result: `2`
+
+---
+
+# 🔹 HARD TESTS (5)
+
+*(CALL / RET, stack frames, nesting)*
+
+---
+
+### **H1. Simple function**
+
+```asm
+CALL f
+HALT
+f:
+PUSH 7
+RET
+```
+
+Expected result: `7`
+
+---
+
+### **H2. Function with arithmetic**
+
+```asm
+CALL f
+HALT
+f:
+PUSH 4
+PUSH 5
+MUL
+RET
+```
+
+Expected result: `20`
+
+---
+
+### **H3. Nested calls**
+
+```asm
+CALL f
+HALT
+f:
+CALL g
+RET
+g:
+PUSH 9
+RET
+```
+
+Expected result: `9`
+
+---
+
+### **H4. Function using globals**
+
+```asm
+PUSH 5
+STORE 0
+CALL f
+HALT
+f:
+LOAD 0
+PUSH 2
+MUL
+RET
+```
+
+Expected result: `10`
+
+---
+
+### **H5. Function in loop**
+
+```asm
+PUSH 3
+loop:
+CALL dec
+DUP
+JZ end
+JMP loop
+end:
+HALT
+dec:
+PUSH 1
+SUB
+RET
+```
+
+Expected result: `0`
+
+---
+
+# 🔹 VERY HARD / COMPLEX TESTS (5)
+
+*(These will **break weak assemblers**)*
+
+---
+
+### **VH1. Recursive countdown**
+
+```asm
+CALL fact
+HALT
+fact:
+PUSH 3
+DUP
+JZ base
+PUSH 1
+SUB
+CALL fact
+MUL
+RET
+base:
+DROP
+PUSH 1
+RET
+```
+
+Expected result: `6`
+
+---
+
+### **VH2. Deep nested calls**
+
+```asm
+CALL a
+HALT
+a:
+CALL b
+RET
+b:
+CALL c
+RET
+c:
+PUSH 42
+RET
+```
+
+Expected result: `42`
+
+---
+
+### **VH3. Mixed control + memory**
+
+```asm
+PUSH 0
+STORE 0
+loop:
+LOAD 0
+INC
+STORE 0
+LOAD 0
+PUSH 5
+LT
+JZ end
+JMP loop
+end:
+LOAD 0
+HALT
+```
+
+Expected result: `5`
+
+---
+
+### **VH4. Comparison-driven function**
+
+```asm
+CALL f
+HALT
+f:
+PUSH 10
+PUSH 5
+GT
+JZ no
+PUSH 1
+RET
+no:
+PUSH 0
+RET
+```
+
+Expected result: `1`
+
+---
+
+### **VH5. Stress stack discipline**
+
+```asm
+PUSH 1
+PUSH 2
+PUSH 3
+OVER
+SWAP
+DROP
+ADD
+ADD
+HALT
+```
+
+Expected result: `6`
+
+
+Absolutely — this is a very strong move.
+Well-designed invalid tests signal to the TA that you understand failure modes, not just happy paths. That’s classic systems thinking.
+
+Below are 10 carefully chosen invalid test cases, each targeting a different class of bug. Together, they give near-complete negative coverage of your VM + assembler.
+
+I’ll also tell you what error should trigger and who should catch it (assembler vs VM).
+
+🔴 INVALID TEST CASES (10)
+
+Each case answers:
+
+“What happens if the programmer / assembler / runtime makes a mistake?”
+
+❌ I1. Stack underflow (binary op)
+ADD
+HALT
+
+
+Bug type: stack underflow
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: stack underflow
+
+
+Why important:
+
+Validates stack safety
+
+Very common student bug
+
+❌ I2. Stack underflow (unary op)
+NEG
+HALT
+
+
+Bug type: unary op on empty stack
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: NEG on empty stack
+
+❌ I3. Division by zero
+PUSH 10
+PUSH 0
+DIV
+HALT
+
+
+Bug type: arithmetic exception
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: division by zero
+
+
+Critical for robustness marks.
+
+❌ I4. Invalid opcode
+.byte 0xAB
+HALT
+
+
+(or however Aditya emits raw bytes)
+
+Bug type: unknown instruction
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: invalid opcode 0xAB
+
+
+This proves your VM is not trusting input blindly.
+
+❌ I5. LOAD out of bounds
+LOAD 999
+HALT
+
+
+Bug type: memory bounds violation
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: LOAD index out of bounds
+
+
+Same applies to STORE.
+
+❌ I6. STORE out of bounds
+PUSH 10
+STORE 999
+HALT
+
+
+Bug type: memory corruption prevention
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: STORE index out of bounds
+
+❌ I7. JMP to invalid address
+JMP 9999
+HALT
+
+
+Bug type: illegal control flow
+Who catches it: VM runtime (PC bounds check)
+Expected error:
+
+Runtime error: PC out of bounds
+
+
+Very important for control-flow safety.
+
+❌ I8. JZ without condition
+JZ end
+HALT
+end:
+HALT
+
+
+Bug type: missing condition on stack
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: stack underflow
+
+
+Validates JZ contract.
+
+❌ I9. RET without CALL (invalid frame)
+RET
+HALT
+
+
+Bug type: invalid stack frame
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: stack underflow
+
+
+This is extremely important — shows frame discipline.
+
+❌ I10. CALL to non-function (RET mismatch)
+CALL f
+HALT
+f:
+ADD
+RET
+
+
+Bug type: callee violates calling convention
+Who catches it: VM runtime
+Expected error:
+
+Runtime error: stack underflow
+
+
+Why this matters:
+
+Function didn’t push return value
+
+ABI violation
+
+Shows why calling conventions exist
+
+🧠 Coverage summary (why this is excellent)
+
+These 10 tests cover:
+
+Error class	Covered?
+Stack underflow	✅
+Arithmetic errors	✅
+Invalid opcodes	✅
+Memory bounds	✅
+Control-flow corruption	✅
+Calling convention bugs	✅
+Frame misuse	✅
+Programmer mistakes	✅
+Malformed bytecode	✅

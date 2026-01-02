@@ -1,0 +1,12 @@
+CALL f
+HALT
+f:
+PUSH 10
+PUSH 5
+GT
+JZ no
+PUSH 1
+RET
+no:
+PUSH 0
+RET
