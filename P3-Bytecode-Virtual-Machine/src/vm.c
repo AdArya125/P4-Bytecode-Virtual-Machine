@@ -6,6 +6,7 @@
 
 #define STACK_MAX 1024 //for now keeping stack capacity as 1024
 
+
 //adding this part to show execution over stack
 static void vm_dump_stack(VM *vm) 
 {
@@ -42,6 +43,10 @@ static int32_t vm_pop(VM *vm)
 //initialise VM here
 void vm_init(VM *vm, uint8_t *code, size_t code_size) 
 {
+    #define GLOBALS_MAX 256 // FOR NOW 256 GLOBALS ONLY
+
+    vm->globals_count = GLOBALS_MAX;
+    vm->globals = calloc(GLOBALS_MAX, sizeof(int32_t)); // DOING CALLOC HERE BEACUSE IT WILL BE A ZERO INITIALIZED MEMORY
     vm->code = code;
     vm->code_size = code_size;
     vm->pc = 0;
@@ -58,6 +63,7 @@ void vm_run(VM *vm)
 {
     while (vm->running) 
     {
+        //this if below will automatically prevent bad JMP,JZ as well as wrong PC values
         if (vm->pc >= vm->code_size) 
         {
             fprintf(stderr, "Runtime error: PC out of bounds\n");
@@ -77,6 +83,43 @@ void vm_run(VM *vm)
             vm->pc += 4;
             vm_push(vm, value);
             break;
+
+        case OP_SWAP: 
+            {
+            if (vm->sp < 2) {
+                fprintf(stderr, "Runtime error: SWAP needs 2 values\n");
+                vm->running = 0;
+                break;
+            }
+            int32_t a = vm->stack[vm->sp - 1];
+            int32_t b = vm->stack[vm->sp - 2];
+            vm->stack[vm->sp - 1] = b;
+            vm->stack[vm->sp - 2] = a;
+            break;
+            }
+        case OP_DROP: 
+        {
+            if (vm->sp == 0) {
+                fprintf(stderr, "Runtime error: DROP on empty stack\n");
+                vm->running = 0;
+                break;
+            }
+            vm->sp--;   // discard top
+            break;
+        }
+        case OP_OVER: 
+        {
+            if (vm->sp < 2) {
+                fprintf(stderr, "Runtime error: OVER needs 2 values\n");
+                vm->running = 0;
+                break;
+            }
+            int32_t v = vm->stack[vm->sp - 2];
+            vm_push(vm, v);
+            break;
+        }
+
+
         
         //--------------Arithmatic section here ----------------------
         // stack will be LIFO, order is done to mirror ALU semantics a+b and b+a is different for stack
@@ -111,11 +154,101 @@ void vm_run(VM *vm)
                 break;
             }
         
+        
             vm_push(vm, a / b);
             break;
         }
+        case OP_DUP: {
+            if (vm->sp == 0) {
+                fprintf(stderr, "Runtime error: DUP on empty stack\n");
+                vm->running = 0;
+                break;
+            }
+            int32_t v = vm->stack[vm->sp - 1];
+            vm_push(vm, v);
+            break;
+        }
+        case OP_INC: 
+        {
+            if (vm->sp == 0) {
+                fprintf(stderr, "Runtime error: INC on empty stack\n");
+                vm->running = 0;
+                break;
+            }
+            vm->stack[vm->sp - 1]++;
+            break;
+        }
+        case OP_DEC: 
+        {
+            if (vm->sp == 0) {
+                fprintf(stderr, "Runtime error: DEC on empty stack\n");
+                vm->running = 0;
+                break;
+            }
+            vm->stack[vm->sp - 1]--;
+            break;
+        }
+
+
+
+        //--------LOAD STORE HERE------------
+        case OP_STORE: {
+            uint32_t idx = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+
+            if (idx >= vm->globals_count) {
+                fprintf(stderr, "Runtime error: STORE index out of bounds\n");
+                vm->running = 0;
+                break;
+            }
+        
+            int32_t val = vm_pop(vm);
+            vm->globals[idx] = val;
+            break;
+        }
+
+        case OP_LOAD: {
+            uint32_t idx = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+        
+            if (idx >= vm->globals_count) {
+                fprintf(stderr, "Runtime error: LOAD index out of bounds\n");
+                vm->running = 0;
+                break;
+            }
+        
+            vm_push(vm, vm->globals[idx]);
+            break;
+        }
+
+
+
 
         //____________________________________________________________
+        //--------control flow here---------
+        case OP_JMP: {
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;          // consume operand
+            vm->pc = addr;        // jump
+            break;
+        }
+
+
+        case OP_JZ: {
+            // Operand: 4-byte absolute address
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+            
+            int32_t cond = vm_pop(vm);
+            if (cond == 0) {
+                vm->pc = addr;
+            }
+            //here however operand is part of instruction and if yhe condition is false execution continues after instruction
+            //if true PC is overridden
+            break;
+        }
+
+
         //simple stop done to avoid segfault and undefined behavious
         case OP_HALT:
             vm->running = 0; 
@@ -132,5 +265,7 @@ void vm_run(VM *vm)
 //freeing VM here
 void vm_free(VM *vm) 
 {
+    free(vm->globals);
     free(vm->stack);
+
 }

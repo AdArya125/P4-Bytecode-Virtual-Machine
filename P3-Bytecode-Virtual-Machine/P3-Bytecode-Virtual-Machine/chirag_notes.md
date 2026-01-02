@@ -1,32 +1,3 @@
-TASK for aditya : 
-1st day
-Design a simple assembler for our VM.
-Input: text assembly
-Output: bytecode file or byte array
-Instructions: PUSH, ADD, SUB, MUL, DIV, JMP, JZ, LOAD, STORE, HALT
-Absolute addresses are fine for now.
-need clean mapping first then we can look into features
-what I do need : Instruction → opcode mapping,Operand parsing logic,Skeleton assembler.c
-
-2nd day
-Assembler extensions + test programs
-CALL / RET syntax support
-Assembly programs:
-
-    - loop
-    - function call
-    - nested call
-maybe some testing with TA level test cases 
-
-for documentation common part:
-architecture overview
-ISA table
-How to run VM+ assembler
-test decriptions
-
-
-I will look into finishing VM features LOAD, store, call ret
-
 TODO
 instruction set definition
 stack-based execution
@@ -174,16 +145,16 @@ arithmatic push, add
 modular file struture
 
 Plan ahead 
-Day 1 (today): Finish Core Arithmetic + Visibility (done)
+Day 1 (today): Finish Core Arithmetic + Visibility
 
 Goal: strengthen VM core
 
 Tasks:
 
-Add SUB, MUL, DIV (done)
-Add divide-by-zero check (done)
-Add dump_stack() helper (done)
-Optional -trace flag  
+Add SUB, MUL, DIV
+Add divide-by-zero check
+Add dump_stack() helper
+Optional -trace flag
 
 Why this matters:
 
@@ -196,10 +167,10 @@ Day 2: Control Flow + Memory
 Goal: programs that branch and loop
 
 Tasks:
-Implement JMP, JZ (done)
-Add globals[] 
-Implement LOAD idx, STORE idx 
-Write loop test (countdown, sum) 
+Implement JMP, JZ
+Add globals[]
+Implement LOAD idx, STORE idx
+Write loop test (countdown, sum)
 
 Why this matters:
 Control flow is non-negotiable for marks
@@ -240,5 +211,3 @@ Short technical report
 Why this matters:
 Easy marks if not rushed
 Makes demo smooth
-
-extras I wanna add : SWAP, DROP, OVER (duplicates second element), EQ, LT, GT (equal,less than greater than), INC, DEC, NEG, PRINT, NOP

@@ -22,10 +22,6 @@ typedef struct VM
     uint32_t sp; // next free slot
     uint32_t fp; // frame pointer (unused for now will change later)
     uint32_t stack_capacity;
-    
-    /* --- Global Data Segment --- */
-    int32_t  *globals;
-    uint32_t  globals_count;
 
     /* Execution state */
     int running;
