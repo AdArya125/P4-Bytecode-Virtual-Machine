@@ -15,7 +15,7 @@ if [ ! -x "$TARGET" ]; then
 fi
 
 echo "Running VM on all .txt files in $TEST_DIR ..."
-for f in "$TEST_DIR"/*.txt; do
+for f in "$TEST_DIR"/*.bin; do
     [ -e "$f" ] || continue
     echo
     echo "===== $f ====="
@@ -24,4 +24,7 @@ for f in "$TEST_DIR"/*.txt; do
     # with trace
     # echo "--- with --d ---"
     $TARGET --d "$f"
+    echo "File executed: $f"
+    echo -e "\npress Enter to continue"
+    read x
 done

@@ -45,7 +45,7 @@ total=0
 # 4. Loop over ALL .txt files
 for asm_file in "${asm_files[@]}"; do
     base=$(basename "$asm_file" .txt)
-    bin_file="$ASM_DIR/${base}.bin"
+    bin_file="$ASM_DIR/outputs/${base}.bin"
 
     echo "=== $base ==="
 

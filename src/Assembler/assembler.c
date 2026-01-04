@@ -64,6 +64,17 @@ int assemble_file(const char *input_path, const char *output_path)
     uint32_t pc = 0;
     unsigned lineno = 0;
 
+    // Need to run one pass to read and store all labels and their positions
+
+    // This is the code of the second pass:
+
+    FILE *out = fopen(output_path, "wb");
+    if (!out)
+    {
+        fprintf(stderr, "Assembler: cannot open '%s' for writing\n", output_path);
+        goto error;
+    }
+
     while (lx_read_line(in, line, sizeof(line)))
     {
         lineno++;
@@ -95,6 +106,8 @@ int assemble_file(const char *input_path, const char *output_path)
         }
 
         printf("0x%02X ", (unsigned)op);
+
+        fputc(op, out);
         pc++;
 
         char *arg = strtok(NULL, " \t\r\n");
@@ -115,7 +128,7 @@ int assemble_file(const char *input_path, const char *output_path)
             if (!ok)
             {
                 fprintf(stderr, "Assembler: invalid PUSH operand '%s' on line %u\n", arg, lineno);
-                return 1;
+                goto error_out;
             }
             operand = (uint32_t)v;
             break;
@@ -127,7 +140,7 @@ int assemble_file(const char *input_path, const char *output_path)
             if (!ok)
             {
                 fprintf(stderr, "Assembler: invalid index '%s' on line %u\n", arg, lineno);
-                return 1;
+                goto error_out;
             }
             break;
         }
@@ -139,7 +152,7 @@ int assemble_file(const char *input_path, const char *output_path)
         }
         default:
             fprintf(stderr, "Assembler: unexpected operand for '%s' on line %u\n", mn, lineno);
-            return 1;
+            goto error_out;
         }
 
         uint8_t b0 = (uint8_t)(operand & 0xFF);
@@ -147,8 +160,21 @@ int assemble_file(const char *input_path, const char *output_path)
         uint8_t b2 = (uint8_t)((operand >> 16) & 0xFF);
         uint8_t b3 = (uint8_t)((operand >> 24) & 0xFF);
         printf("%u %u %u %u\n", (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3);
+        fputc(b0, out);
+        fputc(b1, out);
+        fputc(b2, out);
+        fputc(b3, out);
         pc += 4;
     }
 
+    fclose(out);
+    fclose(in);
     return 0;
+
+error_out:
+    if (out)
+        fclose(out);
+error:
+    fclose(in);
+    return 1;
 }

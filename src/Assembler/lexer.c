@@ -156,6 +156,16 @@ int lx_lookup_opcode(const char *mnemonic, uint8_t *out)
         *out = OP_HALT;
         return 1;
     }
+    if (strcmp(mnemonic, "CALL") == 0)
+    {
+        *out = OP_CALL;
+        return 1;
+    }
+    if (strcmp(mnemonic, "RET") == 0)
+    {
+        *out = OP_RET;
+        return 1;
+    }
 
     return 0;
 }
