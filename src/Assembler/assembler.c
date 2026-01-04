@@ -1,5 +1,6 @@
 #include "assembler.h"
 #include "lexer.h"
+#include "symbols.h"
 #include "../instruction.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,7 @@ static uint32_t instr_size(uint8_t opcode)
     case OP_LOAD:
     case OP_JMP:
     case OP_JZ:
+    case OP_CALL:
         return 1 + 4; // 1 byte for instruction and 4 bytes (32 bits) for value
     default:
         return 1; // 1 byte for instruction
@@ -60,20 +62,72 @@ int assemble_file(const char *input_path, const char *output_path)
         return 1;
     }
 
+    LabelTable labels;
+    labels_init(&labels);
+
     char line[512];
     uint32_t pc = 0;
     unsigned lineno = 0;
 
-    // Need to run one pass to read and store all labels and their positions
+    // -------- Pass 1: labels + sizes --------
+    while (lx_read_line(in, line, sizeof(line)))
+    {
+        lineno++;
+        char *p = lx_trim(line);
+        lx_chomp_comment(p); /* kill trailing comment */
+        if (lx_is_blank_or_comment(p))
+            continue;
 
-    // This is the code of the second pass:
+        char *colon = strchr(p, ':');
+        if (colon)
+        {
+            // printf("Found lable at %d\n", lineno);
+            // printf("%s\n", p);
+            *colon = '\0';
+            // printf("%s\n", p);
+            char *name = lx_trim(p);
+            if (*name == '\0')
+            {
+                fprintf(stderr, "Assembler: empty label on line %u\n", lineno);
+                goto error;
+            }
 
+            // printf("%s %d\n", name, pc);
+            labels_add(&labels, name, pc);
+            p = lx_trim(colon + 1);
+            if (*p == '\0' || *p == ';')
+            {
+                continue;
+            }
+        }
+
+        char *mn = strtok(p, " \t\r\n");
+        if (!mn)
+            continue;
+
+        uint8_t op;
+        if (!lx_lookup_opcode(mn, &op))
+        {
+            fprintf(stderr, "Assembler: unknown mnemonic '%s' on line %u\n", mn, lineno);
+            goto error;
+        }
+
+        pc += instr_size(op);
+    }
+    if (labels.count)
+        labels_dump(&labels);
+    // -------- Pass 2: emit code --------
+
+    rewind(in);
     FILE *out = fopen(output_path, "wb");
     if (!out)
     {
         fprintf(stderr, "Assembler: cannot open '%s' for writing\n", output_path);
         goto error;
     }
+
+    pc = 0;
+    lineno = 0;
 
     while (lx_read_line(in, line, sizeof(line)))
     {
@@ -146,12 +200,28 @@ int assemble_file(const char *input_path, const char *output_path)
         }
         case OP_JMP:
         case OP_JZ:
+        case OP_CALL:
         {
-            // left to implement later
+            if (!labels_find(&labels, arg, &operand))
+            {
+                fprintf(stderr, "Assembler: unknown label '%s' on line %u\n", arg, lineno);
+                goto error_out;
+            }
+            break;
+        }
+        case OP_RET:
+        {
+            if (arg)
+            {
+                fprintf(stderr,
+                        "Assembler: 'RET' takes no operands (line %u)\n",
+                        lineno);
+                goto error_out;
+            }
             break;
         }
         default:
-            fprintf(stderr, "Assembler: unexpected operand for '%s' on line %u\n", mn, lineno);
+            fprintf(stderr, "Assembler: unexpected operand for '%s' on line %u : %s\n", mn, lineno, arg);
             goto error_out;
         }
 

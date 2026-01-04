@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$ASM_DIR/.." && pwd)"
 TESTS_DIR="$ROOT_DIR/../tests/Atests"  # ← path OK
 VM_BINARY="$ROOT_DIR/vm"
 ASM_BINARY="$ASM_DIR/vm-asm"
-GCC_CMD="gcc -Wall -Wextra -std=c11 -g -I. -I.. {lexer,assembler,asm_main}.c -o $ASM_BINARY"
+GCC_CMD="gcc -Wall -Wextra -std=c11 -g -I. -I.. {lexer,symbols,assembler,asm_main}.c -o $ASM_BINARY"
 
 echo "=== Assembler Tests ==="
 echo "Tests: $TESTS_DIR"

@@ -12,9 +12,25 @@ static void usage(const char *prog)
 static char *default_output_name(const char *input)
 {
     static char buf[256];
-    snprintf(buf, sizeof(buf), "%s.bin", input);
+
+    if (!input)
+        return NULL;
+
+    const char *dot = strrchr(input, '.');
+    size_t len = dot ? (size_t)(dot - input) : strlen(input);
+
+    if (len + 4 >= sizeof(buf))
+    { // ".bin" + '\0'
+        fprintf(stderr, "Assembler: output filename too long\n");
+        exit(1);
+    }
+
+    memcpy(buf, input, len);
+    memcpy(buf + len, ".bin", 5); // includes '\0'
+
     return buf;
 }
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
