@@ -375,6 +375,20 @@ void vm_run(VM *vm)
             // EAT a 5 star and do nothing
             break;
 
+        // it was affecting the Abstract binary interface here like what was going in stack was 
+        // [arg |return_pc | old_fp ]
+        //                        ↑ sp
+        //     fp ────────────────┘
+        // this caused old fp to be accessed in place of arguments by any function which specifically broke test case for fact (T20)
+
+        // new architecture simply changes one line over the old one and adds argument on the top 
+        // [return_pc | old_fp | arg]
+        //                        ↑ sp
+        //     fp ────────────────┘
+        //failed to fix issue so reverted back 
+        
+
+
         case OP_CALL: 
         {
             uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
@@ -393,6 +407,26 @@ void vm_run(VM *vm)
             vm->pc = addr;
             break;
         }
+        // case OP_CALL:
+        // {
+        //     uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+        //     vm->pc += 4;
+
+        //     // Save metadata
+        //     vm_push(vm, vm->pc);   // return_pc
+        //     vm_push(vm, vm->fp);   // old_fp
+
+        //     // fp points to metadata base
+        //     vm->fp = vm->sp - 2;
+
+        //     // Hide metadata below stack top
+        //     vm->sp = vm->fp;       // <-- KEY LINE
+
+        //     // Jump to function
+        //     vm->pc = addr;
+        //     break;
+        // }
+
         case OP_RET: 
         {
             // 1. Pop return value (callee must have pushed it)
@@ -413,6 +447,25 @@ void vm_run(VM *vm)
             vm_push(vm, ret);
             break;
         }
+        // case OP_RET: 
+        // {
+        //     // Pop return value (from visible stack)
+        //     int32_t ret = vm_pop(vm);
+
+        //     // Restore metadata visibility
+        //     vm->sp = vm->fp + 2;
+
+        //     // Restore saved frame
+        //     uint32_t old_fp = vm_pop(vm);
+        //     uint32_t ret_pc = vm_pop(vm);
+
+        //     vm->fp = old_fp;
+        //     vm->pc = ret_pc;
+
+        //     // Push return value for caller
+        //     vm_push(vm, ret);
+        //     break;
+        // }
 
 
 

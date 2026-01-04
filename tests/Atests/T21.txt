@@ -1,15 +1,17 @@
+PUSH 3        ; argument n = 3
 CALL fact
 HALT
+
 fact:
-PUSH 3
-DUP
-JZ base
+DUP           ; n n
+JZ base       ; if n == 0 goto base
 PUSH 1
-SUB
-CALL fact
-MUL
+SUB           ; n (n-1)
+CALL fact     ; fact(n-1)
+MUL           ; n * fact(n-1)
 RET
+
 base:
-DROP
+DROP          ; drop 0
 PUSH 1
 RET
