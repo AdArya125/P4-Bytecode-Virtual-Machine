@@ -1,13 +1,17 @@
 PUSH 3
+
 loop:
+STORE 0
 CALL dec
 DUP
 JZ end
 JMP loop
+
 end:
 HALT
+
 dec:
-SWAP      
+LOAD 0
 PUSH 1
 SUB
 RET

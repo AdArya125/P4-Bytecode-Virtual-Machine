@@ -9,31 +9,60 @@ this file is for machine definition
 
 //this struct will tell values of all parts at a given set of time 
 // it is more like if we pause VM at current point what values should we save
+// typedef struct VM 
+// {
+//     /* Code part is defined here */
+//     uint64_t instr_count;
+
+//     uint8_t *code;
+//     size_t code_size;
+//     uint32_t pc;
+
+//     /* Stack part is defined here */
+//     int32_t *stack; //operand stack
+//     uint32_t sp; // next free slot
+//     uint32_t fp; // frame pointer (unused for now will change later)
+//     uint32_t stack_capacity;
+    
+//     /* --- Global Data Segment --- */
+//     int32_t  *globals;
+//     uint32_t  globals_count;
+
+//     /* Execution state */
+//     int running;
+//     //for debug of stack states
+//     int trace;          // 0 = off, 1 = on
+
+// } VM;
+// single stack approach failed so updating the code to two stack appraoch
 typedef struct VM 
 {
-    /* Code part is defined here */
+    /* Code */
     uint64_t instr_count;
-
     uint8_t *code;
     size_t code_size;
     uint32_t pc;
 
-    /* Stack part is defined here */
-    int32_t *stack; //operand stack
-    uint32_t sp; // next free slot
-    uint32_t fp; // frame pointer (unused for now will change later)
-    uint32_t stack_capacity;
-    
-    /* --- Global Data Segment --- */
+    /* ---------- Data Stack ---------- */
+    int32_t  *data_stack;     // renamed from stack
+    uint32_t  ds_sp;          // next free slot
+    uint32_t  fp;             // frame pointer into data stack
+    uint32_t  data_capacity;
+
+    /* ---------- Call Stack ---------- */
+    uint32_t *call_stack;     // NEW
+    uint32_t  cs_sp;          // next free slot
+    uint32_t  call_capacity;
+
+    /* ---------- Globals ---------- */
     int32_t  *globals;
     uint32_t  globals_count;
 
-    /* Execution state */
+    /* Execution */
     int running;
-    //for debug of stack states
-    int trace;          // 0 = off, 1 = on
-
+    int trace;
 } VM;
+
 
 /* VM lifecycle */
 void vm_init(VM *vm, uint8_t *code, size_t code_size);

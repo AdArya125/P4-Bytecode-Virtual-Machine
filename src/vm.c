@@ -14,42 +14,75 @@ static void vm_error(VM *vm, const char *msg)
 }
 
 // adding this part to show execution over stack
+// was working fine for single stack architecture but moving to two stack architecture we have to change it 
+//static void vm_dump_stack(VM *vm)
+// {
+//     printf("STACK [size=%u]: ", vm->sp);
+//     for (uint32_t i = 0; i < vm->sp; i++)
+//     {
+//         printf("%d ", vm->stack[i]);
+//     }
+//     printf("\n");
+// }
+//updated code for tw stack comes here
 static void vm_dump_stack(VM *vm)
 {
-    printf("STACK [size=%u]: ", vm->sp);
-    for (uint32_t i = 0; i < vm->sp; i++)
-    {
-        printf("%d ", vm->stack[i]);
-    }
+    printf("DATA STACK [size=%u]: ", vm->ds_sp);
+    for (uint32_t i = 0; i < vm->ds_sp; i++)
+        printf("%d ", vm->data_stack[i]);
     printf("\n");
 }
 
+
+
 // basic push pop is done here with proper bound check
+//----------------------------------------------------
+//single stack push pop which worked fine was here but updating it ahead to two stack architecture
+// static void vm_push(VM *vm, int32_t value)
+// {
+//     if (vm->sp >= vm->stack_capacity)
+//     {
+//         // fprintf(stderr, "Runtime error: stack overflow\n");
+//         // vm->running = 0;
+//         vm_error(vm, "stack overflow");
+
+//         return;
+//     }
+//     vm->stack[vm->sp++] = value; // stack pointer increment happens here
+// }
+
+// static int32_t vm_pop(VM *vm)
+// {
+//     if (vm->sp == 0)
+//     {
+//         // fprintf(stderr, "Runtime error: stack underflow\n");
+//         // vm->running = 0;
+//         vm_error(vm, "stack underflow");
+
+//         return 0;
+//     }
+//     return vm->stack[--vm->sp];
+// }
+//----------------------------------------------------
+// updated push pop for two stack architecture comes here
 static void vm_push(VM *vm, int32_t value)
 {
-    if (vm->sp >= vm->stack_capacity)
-    {
-        // fprintf(stderr, "Runtime error: stack overflow\n");
-        // vm->running = 0;
-        vm_error(vm, "stack overflow");
-
+    if (vm->ds_sp >= vm->data_capacity) {
+        vm_error(vm, "data stack overflow");
         return;
     }
-    vm->stack[vm->sp++] = value; // stack pointer increment happens here
+    vm->data_stack[vm->ds_sp++] = value;
 }
 
 static int32_t vm_pop(VM *vm)
 {
-    if (vm->sp == 0)
-    {
-        // fprintf(stderr, "Runtime error: stack underflow\n");
-        // vm->running = 0;
-        vm_error(vm, "stack underflow");
-
+    if (vm->ds_sp == 0) {
+        vm_error(vm, "data stack underflow");
         return 0;
     }
-    return vm->stack[--vm->sp];
+    return vm->data_stack[--vm->ds_sp];
 }
+
 
 // initialise VM here
 void vm_init(VM *vm, uint8_t *code, size_t code_size)
@@ -66,10 +99,19 @@ void vm_init(VM *vm, uint8_t *code, size_t code_size)
     vm->code_size = code_size;
     vm->pc = 0;
 
-    vm->stack_capacity = STACK_MAX;
-    vm->stack = malloc(sizeof(int32_t) * STACK_MAX); // allocating stack to vm here
-    vm->sp = 0;
+    // vm->stack_capacity = STACK_MAX;
+    // vm->stack = malloc(sizeof(int32_t) * STACK_MAX); // allocating stack to vm here
+    // vm->sp = 0;
+    // vm->fp = 0;
+    vm->data_capacity = STACK_MAX;
+    vm->data_stack = calloc(STACK_MAX, sizeof(int32_t));
+    vm->ds_sp = 0;
     vm->fp = 0;
+    
+    vm->call_capacity = STACK_MAX;
+    vm->call_stack = calloc(STACK_MAX, sizeof(uint32_t));
+    vm->cs_sp = 0;
+
 
     vm->running = 1;
     vm->trace = 0; // off by default
@@ -102,50 +144,84 @@ void vm_run(VM *vm)
             vm->pc += 4;
             vm_push(vm, value);
             break;
+        // code for unified stak is here next up is for two stackimplementation
+        // case OP_SWAP:
+        // {
+        //     if (vm->sp < 2)
+        //     {
+        //         // fprintf(stderr, "Runtime error: SWAP needs 2 values\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "SWAP NEEDS 2 VALUES ATLEAST");
 
+        //         break;
+        //     }
+        //     int32_t a = vm->stack[vm->sp - 1];
+        //     int32_t b = vm->stack[vm->sp - 2];
+        //     vm->stack[vm->sp - 1] = b;
+        //     vm->stack[vm->sp - 2] = a;
+        //     break;
+        // }
+        // two stack implementation of swap comes here
         case OP_SWAP:
         {
-            if (vm->sp < 2)
-            {
-                // fprintf(stderr, "Runtime error: SWAP needs 2 values\n");
-                // vm->running = 0;
-                vm_error(vm, "SWAP NEEDS 2 VALUES ATLEAST");
-
+            if (vm->ds_sp < 2) {
+                vm_error(vm, "SWAP needs 2 values");
                 break;
             }
-            int32_t a = vm->stack[vm->sp - 1];
-            int32_t b = vm->stack[vm->sp - 2];
-            vm->stack[vm->sp - 1] = b;
-            vm->stack[vm->sp - 2] = a;
+            int32_t a = vm->data_stack[vm->ds_sp - 1];
+            int32_t b = vm->data_stack[vm->ds_sp - 2];
+            vm->data_stack[vm->ds_sp - 1] = b;
+            vm->data_stack[vm->ds_sp - 2] = a;
             break;
         }
+
+        // case OP_DROP:
+        // {
+        //     if (vm->sp == 0)
+        //     {
+        //         // fprintf(stderr, "Runtime error: DROP on empty stack\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "DROP on empty stack");
+
+        //         break;
+        //     }
+        //     vm->sp--; // discard top
+        //     break;
+        // }
         case OP_DROP:
         {
-            if (vm->sp == 0)
-            {
-                // fprintf(stderr, "Runtime error: DROP on empty stack\n");
-                // vm->running = 0;
+            if (vm->ds_sp == 0) {
                 vm_error(vm, "DROP on empty stack");
-
                 break;
             }
-            vm->sp--; // discard top
+            vm->ds_sp--;
             break;
         }
+
+        // case OP_OVER:
+        // {
+        //     if (vm->sp < 2)
+        //     {
+        //         // fprintf(stderr, "Runtime error: OVER needs 2 values\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "OVER needs 2 values");
+
+        //         break;
+        //     }
+        //     int32_t v = vm->stack[vm->sp - 2];
+        //     vm_push(vm, v);
+        //     break;
+        // }
         case OP_OVER:
         {
-            if (vm->sp < 2)
-            {
-                // fprintf(stderr, "Runtime error: OVER needs 2 values\n");
-                // vm->running = 0;
+            if (vm->ds_sp < 2) {
                 vm_error(vm, "OVER needs 2 values");
-
                 break;
             }
-            int32_t v = vm->stack[vm->sp - 2];
-            vm_push(vm, v);
+            vm_push(vm, vm->data_stack[vm->ds_sp - 2]);
             break;
         }
+
 
         //--------------Arithmatic section here ----------------------
         // stack will be LIFO, order is done to mirror ALU semantics a+b and b+a is different for stack
@@ -189,49 +265,92 @@ void vm_run(VM *vm)
             vm_push(vm, a / b);
             break;
         }
+        // case OP_DUP:
+        // {
+        //     if (vm->sp == 0)
+        //     {
+        //         // fprintf(stderr, "Runtime error: DUP on empty stack\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "DUP on empty stack");
+
+        //         break;
+        //     }
+        //     int32_t v = vm->stack[vm->sp - 1];
+        //     vm_push(vm, v);
+        //     break;
+        // }
         case OP_DUP:
         {
-            if (vm->sp == 0)
-            {
-                // fprintf(stderr, "Runtime error: DUP on empty stack\n");
-                // vm->running = 0;
+            if (vm->ds_sp == 0) {
                 vm_error(vm, "DUP on empty stack");
-
                 break;
             }
-            int32_t v = vm->stack[vm->sp - 1];
-            vm_push(vm, v);
+            vm_push(vm, vm->data_stack[vm->ds_sp - 1]);
             break;
         }
+
+        // case OP_INC:
+        // {
+        //     if (vm->sp == 0)
+        //     {
+        //         // fprintf(stderr, "Runtime error: INC on empty stack\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "INC on empty stack");
+
+        //         break;
+        //     }
+        //     vm->stack[vm->sp - 1]++;
+        //     break;
+        // }
         case OP_INC:
         {
-            if (vm->sp == 0)
-            {
-                // fprintf(stderr, "Runtime error: INC on empty stack\n");
-                // vm->running = 0;
+            if (vm->ds_sp == 0) {
                 vm_error(vm, "INC on empty stack");
-
                 break;
             }
-            vm->stack[vm->sp - 1]++;
+            vm->data_stack[vm->ds_sp - 1]++;
             break;
         }
+
+        // case OP_DEC:
+        // {
+        //     if (vm->sp == 0)
+        //     {
+        //         // fprintf(stderr, "Runtime error: DEC on empty stack\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "DEC on empty stack");
+
+        //         break;
+        //     }
+        //     vm->stack[vm->sp - 1]--;
+        //     break;
+        // }
         case OP_DEC:
         {
-            if (vm->sp == 0)
-            {
-                // fprintf(stderr, "Runtime error: DEC on empty stack\n");
-                // vm->running = 0;
+            if (vm->ds_sp == 0) {
                 vm_error(vm, "DEC on empty stack");
-
                 break;
             }
-            vm->stack[vm->sp - 1]--;
+            vm->data_stack[vm->ds_sp - 1]--;
             break;
         }
+
+        // case OP_NEG:
+        // {
+        //     if (vm->sp == 0)
+        //     {
+        //         // fprintf(stderr, "Runtime error: NEG on empty stack\n");
+        //         // vm->running = 0;
+        //         vm_error(vm, "NEG on empty stack");
+
+        //         break;
+        //     }
+        //     vm->stack[vm->sp - 1] = -vm->stack[vm->sp - 1];
+        //     break;
+        // }
         case OP_NEG:
         {
-            if (vm->sp == 0)
+            if (vm->ds_sp == 0)
             {
                 // fprintf(stderr, "Runtime error: NEG on empty stack\n");
                 // vm->running = 0;
@@ -239,13 +358,13 @@ void vm_run(VM *vm)
 
                 break;
             }
-            vm->stack[vm->sp - 1] = -vm->stack[vm->sp - 1];
+            vm->data_stack[vm->ds_sp - 1] = -vm->data_stack[vm->ds_sp - 1];
             break;
         }
         //------REL Ops--------
         case OP_EQ:
         {
-            if (vm->sp < 2)
+            if (vm->ds_sp < 2)
             {
                 // fprintf(stderr, "Runtime error: EQ needs 2 values\n");
                 // vm->running = 0;
@@ -259,7 +378,7 @@ void vm_run(VM *vm)
         }
         case OP_LT:
         {
-            if (vm->sp < 2)
+            if (vm->ds_sp < 2)
             {
                 // fprintf(stderr, "Runtime error: LT needs 2 values\n");
                 // vm->running = 0;
@@ -274,7 +393,7 @@ void vm_run(VM *vm)
         }
         case OP_GT:
         {
-            if (vm->sp < 2)
+            if (vm->ds_sp < 2)
             {
                 // fprintf(stderr, "Runtime error: GT needs 2 values\n");
                 // vm->running = 0;
@@ -359,11 +478,12 @@ void vm_run(VM *vm)
 
         case OP_PRINT:
         {
-            if (vm->sp == 0)
+            // if (vm->sp == 0)
+            if (vm->ds_sp == 0)
             {
                 // fprintf(stderr, "Runtime error: PRINT on empty stack\n");
                 // vm->running = 0;
-                vm_error(vm, "division by zero");
+                vm_error(vm, "PRINT on empty stack");
 
                 break;
             }
@@ -388,25 +508,26 @@ void vm_run(VM *vm)
         //failed to fix issue so reverted back 
         
 
+//single stack implementation of op call falls here and 1st one is correct version 2nd one is failed try to fix issue
+//third one will be new corrected implementation for two stack architecture
+        // case OP_CALL: 
+        // {
+        //     uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+        //     vm->pc += 4;
 
-        case OP_CALL: 
-        {
-            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
-            vm->pc += 4;
+        //     // Push return address
+        //     vm_push(vm, vm->pc);
 
-            // Push return address
-            vm_push(vm, vm->pc);
+        //     // Push old frame pointer
+        //     vm_push(vm, vm->fp);
 
-            // Push old frame pointer
-            vm_push(vm, vm->fp);
+        //     // New frame starts here
+        //     vm->fp = vm->sp - 2;
 
-            // New frame starts here
-            vm->fp = vm->sp - 2;
-
-            // Jump to function
-            vm->pc = addr;
-            break;
-        }
+        //     // Jump to function
+        //     vm->pc = addr;
+        //     break;
+        // }
         // case OP_CALL:
         // {
         //     uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
@@ -426,27 +547,46 @@ void vm_run(VM *vm)
         //     vm->pc = addr;
         //     break;
         // }
-
-        case OP_RET: 
+        case OP_CALL:
         {
-            // 1. Pop return value (callee must have pushed it)
-            int32_t ret = vm_pop(vm);
-
-            // 2. Read saved frame data WITHOUT destroying stack yet
-            uint32_t old_fp = vm->stack[vm->fp + 1];
-            uint32_t ret_pc = vm->stack[vm->fp];
-
-            // 3. Restore stack pointer to caller frame
-            vm->sp = vm->fp;
-
-            // 4. Restore FP and PC
-            vm->fp = old_fp;
-            vm->pc = ret_pc;
-
-            // 5. Push return value for caller
-            vm_push(vm, ret);
+            uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+        
+            // Save return address
+            vm->call_stack[vm->cs_sp++] = vm->pc;
+        
+            // Save old frame pointer
+            vm->call_stack[vm->cs_sp++] = vm->fp;
+        
+            // New frame starts at current data stack top
+            vm->fp = vm->ds_sp;
+        
+            // Jump
+            vm->pc = addr;
             break;
         }
+//---------------------------------------------------------------
+//same as call 1st is correct for single stack, 3rd is correct for two stack architecture       
+// case OP_RET: 
+        // {
+        //     // 1. Pop return value (callee must have pushed it)
+        //     int32_t ret = vm_pop(vm);
+
+        //     // 2. Read saved frame data WITHOUT destroying stack yet
+        //     uint32_t old_fp = vm->stack[vm->fp + 1];
+        //     uint32_t ret_pc = vm->stack[vm->fp];
+
+        //     // 3. Restore stack pointer to caller frame
+        //     vm->sp = vm->fp;
+
+        //     // 4. Restore FP and PC
+        //     vm->fp = old_fp;
+        //     vm->pc = ret_pc;
+
+        //     // 5. Push return value for caller
+        //     vm_push(vm, ret);
+        //     break;
+        // }
         // case OP_RET: 
         // {
         //     // Pop return value (from visible stack)
@@ -467,8 +607,20 @@ void vm_run(VM *vm)
         //     break;
         // }
 
+        case OP_RET:
+        {
+            // Drop callee locals
+            vm->ds_sp = vm->fp;
+        
+            // Restore frame pointer
+            vm->fp = vm->call_stack[--vm->cs_sp];
+        
+            // Restore return address
+            vm->pc = vm->call_stack[--vm->cs_sp];
+            break;
+        }
 
-
+//---------------------------------------------------------------
         default:
             fprintf(stderr, "Unknown opcode: 0x%02X\n", opcode);
             vm->running = 0;
@@ -485,5 +637,8 @@ void vm_run(VM *vm)
 void vm_free(VM *vm)
 {
     free(vm->globals);
-    free(vm->stack);
+    // free(vm->stack);
+    free(vm->data_stack);
+    free(vm->call_stack);
+
 }

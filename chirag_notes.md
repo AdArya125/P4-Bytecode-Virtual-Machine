@@ -242,3 +242,4 @@ Easy marks if not rushed
 Makes demo smooth
 
 extras I wanna add : SWAP, DROP, OVER (duplicates second element), EQ, LT, GT (equal,less than greater than), INC, DEC, NEG, PRINT, NOP
+
