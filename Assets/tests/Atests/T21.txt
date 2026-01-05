@@ -1,4 +1,4 @@
-PUSH 3        ; initial argument
+PUSH 6        ; initial argument
 STORE 0
 CALL fact
 HALT

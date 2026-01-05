@@ -82,18 +82,24 @@ if [ ! -x "$TARGET" ]; then
     echo "Error: $TARGET not built or not executable"
     exit 1
 fi
+echo "Running VM on all .bin files in $TEST_DIR ..."
 
-echo "Running VM on all .txt files in $TEST_DIR ..."
-for f in "$TEST_DIR"/*.bin; do
-    [ -e "$f" ] || continue
+# Collect .bin files in version-aware order
+if ! mapfile -t bin_files < <(find "$TEST_DIR" -maxdepth 1 -name "*.bin" -print | sort -V); then
+    echo "Error scanning VM test directory"
+    exit 1
+fi
+
+if [[ ${#bin_files[@]} -eq 0 ]]; then
+    echo "No .bin files found in $TEST_DIR"
+    exit 1
+fi
+
+for f in "${bin_files[@]}"; do
     echo
     echo "===== $f ====="
-    # no trace
-    # $TARGET "$f"
-    # with trace
-    # echo "--- with --d ---"
     $TARGET --d "$f"
     echo "File executed: $f"
     echo -e "\npress Enter to continue"
-    read x
+    read -r _
 done

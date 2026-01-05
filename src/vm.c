@@ -17,10 +17,16 @@ static void vm_error(VM *vm, const char *msg)
 static void vm_dump_stack(VM *vm)
 {
     printf("STACK [size=%u]: ", vm->sp);
-    for (uint32_t i = 0; i < vm->sp; i++)
+    int flag = (vm->sp > 10) ? 1 : 0;
+    if (flag)
+    {
+        printf(" ... ");
+    }
+    for (uint32_t i = flag * (vm->sp - 10); i < vm->sp; i++)
     {
         printf("%d ", vm->stack[i]);
     }
+
     printf("\n");
 }
 
