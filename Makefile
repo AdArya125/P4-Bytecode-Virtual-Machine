@@ -10,7 +10,7 @@ CFLAGS = -Wall -Wextra -g
 SRCS = src/main.c src/vm.c
 
 # Output binary name
-TARGET = vm
+TARGET = Assets/bin/vm
 
 # Default target
 all: $(TARGET)

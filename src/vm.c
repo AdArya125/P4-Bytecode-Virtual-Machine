@@ -375,46 +375,44 @@ void vm_run(VM *vm)
             // EAT a 5 star and do nothing
             break;
 
-        case OP_CALL: 
+        case OP_CALL:
         {
             uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
             vm->pc += 4;
 
-            // Push return address
+            // 1. Push return address
             vm_push(vm, vm->pc);
 
-            // Push old frame pointer
+            // 2. Push old FP
             vm_push(vm, vm->fp);
 
-            // New frame starts here
+            // 3. Set FP to return address slot
             vm->fp = vm->sp - 2;
 
-            // Jump to function
+            // 4. Jump
             vm->pc = addr;
             break;
         }
-        case OP_RET: 
+        case OP_RET:
         {
-            // 1. Pop return value (callee must have pushed it)
+            // 1. Pop return value
             int32_t ret = vm_pop(vm);
 
-            // 2. Read saved frame data WITHOUT destroying stack yet
+            // 2. Restore saved state
             uint32_t old_fp = vm->stack[vm->fp + 1];
             uint32_t ret_pc = vm->stack[vm->fp];
 
-            // 3. Restore stack pointer to caller frame
+            // 3. Restore stack to caller frame
             vm->sp = vm->fp;
 
-            // 4. Restore FP and PC
+            // 4. Restore registers
             vm->fp = old_fp;
             vm->pc = ret_pc;
 
-            // 5. Push return value for caller
+            // 5. Push return value
             vm_push(vm, ret);
             break;
         }
-
-
 
         default:
             fprintf(stderr, "Unknown opcode: 0x%02X\n", opcode);
@@ -423,6 +421,8 @@ void vm_run(VM *vm)
         // vm_dump_stack(vm); //added to show execution in stack what happens and how, for later part will guard with a flag
         if (vm->trace)
         {
+
+            printf("(PC : %d) : ", vm->pc);
             vm_dump_stack(vm);
         }
     }

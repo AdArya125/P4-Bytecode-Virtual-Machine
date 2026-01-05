@@ -1,0 +1,23 @@
+PUSH 3        ; initial argument
+STORE 0
+CALL fact
+HALT
+
+fact:
+LOAD 0
+DUP           ; [n, n]
+JZ base       ; if n == 0 → base case (consumes one n)
+
+DUP           ; [n, n]
+PUSH 1
+SUB           ; [n, n-1]
+
+STORE 0
+CALL fact     ; [n, fact(n-1)]
+MUL           ; [n * fact(n-1)]
+RET
+
+base:
+DROP          ; remove the 0
+PUSH 1        ; factorial(0) = 1
+RET
