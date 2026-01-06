@@ -37,7 +37,7 @@ static uint32_t parse_u32(const char *s, int *ok)
 }
 
 /* instruction size in bytes for PC accounting */
-static uint32_t instr_size(uint8_t opcode)
+static size_t instr_size(uint8_t opcode)
 {
     switch (opcode)
     {
@@ -46,10 +46,15 @@ static uint32_t instr_size(uint8_t opcode)
     case OP_LOAD:
     case OP_JMP:
     case OP_JZ:
+    case OP_LOAD_LOCAL:
+    case OP_STORE_LOCAL:
+        return 1 + 4;
+
     case OP_CALL:
-        return 1 + 4; // 1 byte for instruction and 4 bytes (32 bits) for value
+        return 1 + 4 + 4; // addr + nargs
+
     default:
-        return 1; // 1 byte for instruction
+        return 1;
     }
 }
 
@@ -165,6 +170,7 @@ int assemble_file(const char *input_path, const char *output_path)
         pc++;
 
         char *arg = strtok(NULL, " \t\r\n");
+        char *arg1 = NULL;
         if (!arg)
         {
             printf("\n");
@@ -172,6 +178,7 @@ int assemble_file(const char *input_path, const char *output_path)
         }
 
         uint32_t operand = 0;
+        int32_t operand1 = 0;
         int ok = 1;
 
         switch (op)
@@ -189,6 +196,8 @@ int assemble_file(const char *input_path, const char *output_path)
         }
         case OP_STORE:
         case OP_LOAD:
+        case OP_LOAD_LOCAL:
+        case OP_STORE_LOCAL:
         {
             operand = parse_u32(arg, &ok);
             if (!ok)
@@ -200,11 +209,36 @@ int assemble_file(const char *input_path, const char *output_path)
         }
         case OP_JMP:
         case OP_JZ:
-        case OP_CALL:
         {
             if (!labels_find(&labels, arg, &operand))
             {
                 fprintf(stderr, "Assembler: unknown label '%s' on line %u\n", arg, lineno);
+                goto error_out;
+            }
+            break;
+        }
+        case OP_CALL:
+        {
+
+            arg1 = strtok(NULL, " \t\r\n");
+
+            if (!labels_find(&labels, arg, &operand))
+            {
+                fprintf(stderr, "Assembler: unknown label '%s' on line %u\n", arg, lineno);
+                goto error_out;
+            }
+
+            operand1 = parse_i32(arg1, &ok);
+            if (!ok || operand1 < 0)
+            {
+                // error("invalid nargs");
+                fprintf(stderr, "Assembler: invalid nargs for function '%s' on line %u\n", arg, lineno);
+                goto error_out;
+            }
+
+            if (!arg1)
+            {
+                fprintf(stderr, "Assembler: missing nargs for function '%s' on line %u\n", arg, lineno);
                 goto error_out;
             }
             break;
@@ -229,12 +263,33 @@ int assemble_file(const char *input_path, const char *output_path)
         uint8_t b1 = (uint8_t)((operand >> 8) & 0xFF);
         uint8_t b2 = (uint8_t)((operand >> 16) & 0xFF);
         uint8_t b3 = (uint8_t)((operand >> 24) & 0xFF);
-        printf("%u %u %u %u\n", (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3);
-        fputc(b0, out);
-        fputc(b1, out);
-        fputc(b2, out);
-        fputc(b3, out);
-        pc += 4;
+        if (op != OP_CALL)
+        {
+            printf("%u %u %u %u\n", (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3);
+            fputc(b0, out);
+            fputc(b1, out);
+            fputc(b2, out);
+            fputc(b3, out);
+            pc += 4;
+        }
+        else
+        {
+            printf("%u %u %u %u ", (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3);
+            fputc(b0, out);
+            fputc(b1, out);
+            fputc(b2, out);
+            fputc(b3, out);
+            b0 = (uint8_t)(operand1 & 0xFF);
+            b1 = (uint8_t)((operand1 >> 8) & 0xFF);
+            b2 = (uint8_t)((operand1 >> 16) & 0xFF);
+            b3 = (uint8_t)((operand1 >> 24) & 0xFF);
+            printf("| %u %u %u %u\n", (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3);
+            fputc(b0, out);
+            fputc(b1, out);
+            fputc(b2, out);
+            fputc(b3, out);
+            pc += 8;
+        }
     }
 
     fclose(out);

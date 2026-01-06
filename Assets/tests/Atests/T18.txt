@@ -1,7 +1,7 @@
-CALL f
+CALL f 0
 HALT
 f:
-CALL g
+CALL g 0
 RET
 g:
 PUSH 9

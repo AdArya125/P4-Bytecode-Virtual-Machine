@@ -331,6 +331,43 @@ void vm_run(VM *vm)
             vm_push(vm, vm->globals[idx]);
             break;
         }
+        case OP_STORE_LOCAL:
+        {
+            uint32_t index = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+
+            int32_t value = vm_pop(vm);
+
+            uint32_t nargs = vm->stack[vm->fp + 2];
+
+            if (index >= nargs)
+            {
+                vm_error(vm, "STORE_LOCAL: arg index out of range");
+                break;
+            }
+
+            uint32_t slot = vm->fp - nargs + index;
+            vm->stack[slot] = value;
+            break;
+        }
+
+        case OP_LOAD_LOCAL:
+        {
+            uint32_t index = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+
+            uint32_t nargs = vm->stack[vm->fp + 2];
+
+            if (index >= nargs)
+            {
+                vm_error(vm, "LOAD_LOCAL: arg index out of range");
+                break;
+            }
+
+            uint32_t slot = vm->fp - nargs + index;
+            vm_push(vm, vm->stack[slot]);
+            break;
+        }
 
         //____________________________________________________________
         //--------control flow here---------
@@ -386,36 +423,42 @@ void vm_run(VM *vm)
             uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
             vm->pc += 4;
 
-            // 1. Push return address
+            uint32_t nargs = *(uint32_t *)&vm->code[vm->pc];
+            vm->pc += 4;
+
+            // 1. push return address
             vm_push(vm, vm->pc);
 
-            // 2. Push old FP
+            // 2. push old FP
             vm_push(vm, vm->fp);
 
-            // 3. Set FP to return address slot
-            vm->fp = vm->sp - 2;
+            // 3. push nargs (frame-local)
+            vm_push(vm, nargs);
 
-            // 4. Jump
+            // 4. establish new frame (FP → return PC)
+            vm->fp = vm->sp - 3;
+
+            // 5. jump
             vm->pc = addr;
             break;
         }
+
         case OP_RET:
         {
-            // 1. Pop return value
             int32_t ret = vm_pop(vm);
 
-            // 2. Restore saved state
+            uint32_t nargs = vm->stack[vm->fp + 2];
             uint32_t old_fp = vm->stack[vm->fp + 1];
             uint32_t ret_pc = vm->stack[vm->fp];
 
-            // 3. Restore stack to caller frame
-            vm->sp = vm->fp;
+            // remove frame + arguments
+            vm->sp = vm->fp - nargs;
 
-            // 4. Restore registers
+            // restore control state
             vm->fp = old_fp;
             vm->pc = ret_pc;
 
-            // 5. Push return value
+            // return value
             vm_push(vm, ret);
             break;
         }

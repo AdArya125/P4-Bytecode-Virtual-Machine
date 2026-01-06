@@ -1,10 +1,10 @@
 PUSH 6        ; initial argument
-STORE 0
-CALL fact
+
+CALL fact 1
 HALT
 
 fact:
-LOAD 0
+LOAD_LOCAL 0
 DUP           ; [n, n]
 JZ base       ; if n == 0 → base case (consumes one n)
 
@@ -12,8 +12,7 @@ DUP           ; [n, n]
 PUSH 1
 SUB           ; [n, n-1]
 
-STORE 0
-CALL fact     ; [n, fact(n-1)]
+CALL fact 1    ; [n, fact(n-1)]
 MUL           ; [n * fact(n-1)]
 RET
 

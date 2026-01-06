@@ -1,10 +1,10 @@
-CALL a
+CALL a 0
 HALT
 a:
-CALL b
+CALL b 0
 RET
 b:
-CALL c
+CALL c 0
 RET
 c:
 PUSH 42

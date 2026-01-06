@@ -150,6 +150,16 @@ int lx_lookup_opcode(const char *mnemonic, uint8_t *out)
         *out = OP_LOAD;
         return 1;
     }
+    if (strcmp(mnemonic, "STORE_LOCAL") == 0)
+    {
+        *out = OP_STORE_LOCAL;
+        return 1;
+    }
+    if (strcmp(mnemonic, "LOAD_LOCAL") == 0)
+    {
+        *out = OP_LOAD_LOCAL;
+        return 1;
+    }
 
     if (strcmp(mnemonic, "HALT") == 0)
     {
