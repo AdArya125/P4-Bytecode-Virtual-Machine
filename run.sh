@@ -101,5 +101,5 @@ for f in "${bin_files[@]}"; do
     "$VM_BINARY" --d "$f"
     echo "Executed: $f"
     echo
-    read -rp "Press Enter to continue..."
+    # read -rp "Press Enter to continue..."
 done

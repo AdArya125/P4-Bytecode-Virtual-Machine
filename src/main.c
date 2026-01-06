@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 #include "vm.h"
 
 //-------------Program 1 basic push, add------------
@@ -178,9 +179,13 @@ int main(int argc, char **argv)
     VM vm;
     vm_init(&vm, program, prog_size);
     vm.trace = trace ? 1 : 0;
+    clock_t start, end;
+    start = clock();
     vm_run(&vm);
+    end = clock();
 
-    printf("Executed %lu instructions\n", vm.instr_count);
+    double cpu_time_used = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("Executed %lu instructions in %.3f μs\n", vm.instr_count, cpu_time_used * 1000000);
 
     if (vm.sp > 0)
     {

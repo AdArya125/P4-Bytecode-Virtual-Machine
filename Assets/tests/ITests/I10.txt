@@ -1,4 +1,4 @@
-CALL f
+CALL f 0
 HALT
 f:
 ADD
