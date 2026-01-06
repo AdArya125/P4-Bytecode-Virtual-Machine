@@ -184,8 +184,7 @@ int main(int argc, char **argv)
 
     if (vm.ds_sp > 0)
     {
-        printf("Result on stack
-            : %d\n", vm.data_stack[vm.ds_sp - 1]);
+        printf("Result on stack: %d\n", vm.data_stack[vm.ds_sp - 1]);
     }
 
     vm_free(&vm);
