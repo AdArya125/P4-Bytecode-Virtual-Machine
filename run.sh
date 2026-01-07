@@ -49,7 +49,7 @@ if [[ $# -ge 1 ]]; then
     
     mkdir -p "$OUT_DIR"
     
-    echo "=== Running Specific Test ==="
+    echo "=== Running File ==="
     
     base=$(basename "$SPECIFIC_TEST" .txt)
     bin_file="$OUT_DIR/$base.bin"
@@ -64,16 +64,16 @@ if [[ $# -ge 1 ]]; then
     if output=$("$ASM_BINARY" "$SPECIFIC_TEST" -o "$bin_file" 2>&1); then
         echo "$output"
         echo
-        echo "✓ Assembly successful!"
+        echo "- Assembly successful!"
         echo
         echo "=== Running VM ==="
         echo
         "$VM_BINARY" "$bin_file"
         echo
-        echo "✓ Test completed successfully"
+        echo "Test completed successfully"
         exit 0
     else
-        echo "✗ FAILED to assemble"
+        echo "FAILED to assemble"
         echo "$output"
         exit 1
     fi

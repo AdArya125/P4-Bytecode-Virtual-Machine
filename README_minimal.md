@@ -5,6 +5,7 @@ A stack-based bytecode virtual machine with custom assembler.
 ## Build Instructions
 
 ### Prerequisites
+
 - GCC (or any C99-compatible compiler)
 - Make
 - Linux / WSL environment recommended
@@ -16,6 +17,7 @@ make
 ```
 
 This builds:
+
 - `vm` — the bytecode virtual machine
 - `assembler` — the assembler for `.txt` assembly programs
 
@@ -25,7 +27,7 @@ Both executables will be placed in `Assets/bin/`.
 
 ## Running the Assembler
 
-Assembly programs are located in `Assets/tests/Atests/`.
+Assembly test programs are located in `Assets/tests/Atests/`.
 
 ### Assemble a Single Program
 
@@ -33,13 +35,19 @@ Assembly programs are located in `Assets/tests/Atests/`.
 ./Assets/bin/assembler Assets/tests/Atests/T1.txt
 ```
 
-This produces a compiled `.bin` file in `Assets/tests/Atests/Assembler_outputs/`.
+This produces a compiled `T1.bin` file in `Assets/tests/Atests/`.
+
+**or**
+
+```bash
+./Assets/bin/assembler <INPUT_DIR> -o <OUTPUT_DIR>
+```
 
 ### Example
 
 ```bash
 ./Assets/bin/assembler Assets/tests/Atests/factorial.txt
-# Output: Assets/tests/Atests/Assembler_outputs/factorial.bin
+# Output: Assets/tests/Atests/factorial.bin
 ```
 
 ---
@@ -49,12 +57,12 @@ This produces a compiled `.bin` file in `Assets/tests/Atests/Assembler_outputs/`
 ### Execute a Compiled Program
 
 ```bash
-./vm Assets/tests/Atests/Assembler_outputs/T1.bin
+./Assets/bin/vm Assets/tests/Atests/Assembler_outputs/T1.bin
 ```
 
 ### Enable Debug Tracing
 
-To see instruction-by-instruction execution with stack dumps:
+To see instruction-by-instruction execution with stack dumps, using `--d` flag:
 
 ```bash
 ./vm --d Assets/tests/Atests/Assembler_outputs/T1.bin
@@ -64,13 +72,14 @@ To see instruction-by-instruction execution with stack dumps:
 
 ## Running All Provided Tests
 
-A convenience script is provided to assemble and run all test programs:
+A convenience script is provided to assemble and run all test programs if no arguments are passed:
 
 ```bash
 ./run.sh
 ```
 
 This script:
+
 1. Builds the assembler and VM
 2. Assembles all test cases from `Assets/tests/Atests/`
 3. Executes each test sequentially
@@ -80,14 +89,20 @@ This script:
 ### Run a Specific Test
 
 ```bash
+./run.sh <INPUT_FILE>
+```
+
+**or**
+
+```bash
 # Assemble
 ./Assets/bin/assembler Assets/tests/Atests/factorial.txt
 
 # Execute
-./vm Assets/tests/Atests/Assembler_outputs/factorial.bin
+./Assets/bin/vm Assets/tests/Atests/Assembler_outputs/factorial.bin
 
 # Execute with debug trace
-./vm --d Assets/tests/Atests/Assembler_outputs/factorial.bin
+./Assets/bin/vm --d Assets/tests/Atests/Assembler_outputs/factorial.bin
 ```
 
 ---
@@ -103,5 +118,9 @@ make
 
 # Or run a single test
 ./Assets/bin/assembler Assets/tests/Atests/T1.txt
-./vm Assets/tests/Atests/Assembler_outputs/T1.bin
+./Assets/bin/vmvm Assets/tests/Atests/T1.bin
+
+OR
+# run a single test using provided script
+./run.sh Assets/tests/Atests/T1.txt
 ```
