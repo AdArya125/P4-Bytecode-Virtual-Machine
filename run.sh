@@ -171,7 +171,7 @@ fi
 for f in "${bin_files[@]}"; do
     echo
     echo "===== $f ====="
-    "$VM_BINARY" "$f"
+    "$VM_BINARY" --d "$f"
     echo "Executed: $f"
     echo
     read -rp "Press Enter to continue..."
