@@ -13,7 +13,7 @@ OUT_DIR="$TESTS_DIR/Assembler_outputs"
 echo "=== Build ==="
 make clean
 make
-echo "✓ Build complete"
+echo "Build complete"
 echo
 
 # Sanity checks

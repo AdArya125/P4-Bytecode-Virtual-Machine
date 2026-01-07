@@ -1,0 +1,24 @@
+PUSH 10
+CALL sumsq 1
+HALT
+sumsq:
+LOAD_LOCAL 0
+JZ sumsq_base
+
+; compute n*n
+LOAD_LOCAL 0
+LOAD_LOCAL 0
+MUL
+
+; compute sumsq(n-1)
+LOAD_LOCAL 0
+PUSH 1
+SUB
+CALL sumsq 1
+
+ADD
+RET
+
+sumsq_base:
+PUSH 0
+RET

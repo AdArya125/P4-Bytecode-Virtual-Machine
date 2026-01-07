@@ -1,0 +1,51 @@
+; A(m,n) =
+;   n+1                  if m == 0
+;   A(m-1,1)             if m > 0 and n == 0
+;   A(m-1, A(m,n-1))     otherwise
+
+PUSH 2
+PUSH 2
+CALL ack 2
+HALT
+ack:
+; if m == 0 → return n + 1
+LOAD_LOCAL 0
+JZ ack_m0
+
+; if n == 0 → A(m-1, 1)
+LOAD_LOCAL 1
+JZ ack_n0
+
+; ---- A(m-1, A(m, n-1)) ----
+
+; compute A(m, n-1)
+LOAD_LOCAL 1
+PUSH 1
+SUB
+LOAD_LOCAL 0
+SWAP
+CALL ack 2
+
+; now stack: [ A(m,n-1) ]
+
+; compute A(m-1, result)
+LOAD_LOCAL 0
+PUSH 1
+SUB
+SWAP
+CALL ack 2
+RET
+
+ack_n0:
+LOAD_LOCAL 0
+PUSH 1
+SUB
+PUSH 1
+CALL ack 2
+RET
+
+ack_m0:
+LOAD_LOCAL 1
+PUSH 1
+ADD
+RET

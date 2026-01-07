@@ -1,0 +1,193 @@
+PUSH 0   ; local0 = sum
+PUSH 1   ; local1 = i1
+PUSH 0   ; local2 = i2
+PUSH 0   ; local3 = i3
+PUSH 0   ; local4 = i4
+PUSH 0   ; local5 = i5
+PUSH 0   ; local6 = i6
+PUSH 0   ; local7 = i7
+PUSH 0   ; local8 = i8
+PUSH 0   ; local9 = i9
+PUSH 0   ; local10 = i10
+
+CALL nested10 11
+HALT
+nested10:
+
+; ---------- L1 ----------
+L1:
+LOAD_LOCAL 1
+PUSH 3
+LT
+JZ END
+
+PUSH 1
+STORE_LOCAL 2
+
+; ---------- L2 ----------
+L2:
+LOAD_LOCAL 2
+PUSH 3
+LT
+JZ INC1
+
+PUSH 1
+STORE_LOCAL 3
+
+; ---------- L3 ----------
+L3:
+LOAD_LOCAL 3
+PUSH 3
+LT
+JZ INC2
+
+PUSH 1
+STORE_LOCAL 4
+
+; ---------- L4 ----------
+L4:
+LOAD_LOCAL 4
+PUSH 3
+LT
+JZ INC3
+
+PUSH 1
+STORE_LOCAL 5
+
+; ---------- L5 ----------
+L5:
+LOAD_LOCAL 5
+PUSH 3
+LT
+JZ INC4
+
+PUSH 1
+STORE_LOCAL 6
+
+; ---------- L6 ----------
+L6:
+LOAD_LOCAL 6
+PUSH 3
+LT
+JZ INC5
+
+PUSH 1
+STORE_LOCAL 7
+
+; ---------- L7 ----------
+L7:
+LOAD_LOCAL 7
+PUSH 3
+LT
+JZ INC6
+
+PUSH 1
+STORE_LOCAL 8
+
+; ---------- L8 ----------
+L8:
+LOAD_LOCAL 8
+PUSH 3
+LT
+JZ INC7
+
+PUSH 1
+STORE_LOCAL 9
+
+; ---------- L9 ----------
+L9:
+LOAD_LOCAL 9
+PUSH 3
+LT
+JZ INC8
+
+PUSH 1
+STORE_LOCAL 10
+
+; ---------- L10 ----------
+L10:
+LOAD_LOCAL 10
+PUSH 3
+LT
+JZ INC9
+
+; ===== BODY =====
+LOAD_LOCAL 0
+PUSH 1
+ADD
+STORE_LOCAL 0
+; ===============
+
+LOAD_LOCAL 10
+PUSH 1
+ADD
+STORE_LOCAL 10
+JMP L10
+
+; ---------- unwind ----------
+INC9:
+LOAD_LOCAL 9
+PUSH 1
+ADD
+STORE_LOCAL 9
+JMP L9
+
+INC8:
+LOAD_LOCAL 8
+PUSH 1
+ADD
+STORE_LOCAL 8
+JMP L8
+
+INC7:
+LOAD_LOCAL 7
+PUSH 1
+ADD
+STORE_LOCAL 7
+JMP L7
+
+INC6:
+LOAD_LOCAL 6
+PUSH 1
+ADD
+STORE_LOCAL 6
+JMP L6
+
+INC5:
+LOAD_LOCAL 5
+PUSH 1
+ADD
+STORE_LOCAL 5
+JMP L5
+
+INC4:
+LOAD_LOCAL 4
+PUSH 1
+ADD
+STORE_LOCAL 4
+JMP L4
+
+INC3:
+LOAD_LOCAL 3
+PUSH 1
+ADD
+STORE_LOCAL 3
+JMP L3
+
+INC2:
+LOAD_LOCAL 2
+PUSH 1
+ADD
+STORE_LOCAL 2
+JMP L2
+
+INC1:
+LOAD_LOCAL 1
+PUSH 1
+ADD
+STORE_LOCAL 1
+JMP L1
+
+END:
+LOAD_LOCAL 0
+RET

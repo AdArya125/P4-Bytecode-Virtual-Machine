@@ -1,0 +1,78 @@
+; -------- T29: 3-level nested loop --------
+; sum += i * j * k
+; i, j, k from 1 to 3
+
+PUSH 0      ; local 0: sum
+PUSH 1      ; local 1: i
+PUSH 0      ; local 2: j (dummy init)
+PUSH 0      ; local 3: k (dummy init)
+CALL nested3 4
+HALT
+
+nested3:
+; locals:
+; 0 = sum
+; 1 = i
+; 2 = j
+; 3 = k
+
+outer_i:
+LOAD_LOCAL 1
+PUSH 4
+LT
+JZ end_all
+
+PUSH 1
+STORE_LOCAL 2        ; j = 1
+
+outer_j:
+LOAD_LOCAL 2
+PUSH 4
+LT
+JZ next_i
+
+PUSH 1
+STORE_LOCAL 3        ; k = 1
+
+outer_k:
+LOAD_LOCAL 3
+PUSH 4
+LT
+JZ next_j
+
+; sum += i * j * k
+LOAD_LOCAL 0
+LOAD_LOCAL 1
+LOAD_LOCAL 2
+MUL
+LOAD_LOCAL 3
+MUL
+ADD
+STORE_LOCAL 0
+
+; k++
+LOAD_LOCAL 3
+PUSH 1
+ADD
+STORE_LOCAL 3
+JMP outer_k
+
+next_j:
+; j++
+LOAD_LOCAL 2
+PUSH 1
+ADD
+STORE_LOCAL 2
+JMP outer_j
+
+next_i:
+; i++
+LOAD_LOCAL 1
+PUSH 1
+ADD
+STORE_LOCAL 1
+JMP outer_i
+
+end_all:
+LOAD_LOCAL 0
+RET

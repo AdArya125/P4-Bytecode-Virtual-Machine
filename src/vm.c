@@ -337,6 +337,12 @@ void vm_run(VM *vm)
             vm->pc += 4;
 
             int32_t value = vm_pop(vm);
+            //check for valid FP
+             if (vm->fp + 2 >= vm->sp)
+            {
+                vm_error(vm, "STORE_LOCAL: corrupted frame pointer");
+                break;
+            }
 
             uint32_t nargs = vm->stack[vm->fp + 2];
 
@@ -347,7 +353,16 @@ void vm_run(VM *vm)
             }
 
             uint32_t slot = vm->fp - nargs + index;
+            //added slot bound check
+            if (slot >= vm->stack_capacity) 
+            {
+                vm_error(vm, "STORE_LOCAL: slot out of bounds");
+                break;
+            }
             vm->stack[slot] = value;
+            // printf("[STL ] idx=%d -> addr=%d (FP=%d)\n", idx, vm->fp + LOCAL_BASE + idx, vm->fp);
+            printf("[STL ] index=%u -> slot=%u (FP=%u, nargs=%u)\n", index, slot, vm->fp, nargs);
+
             break;
         }
 
@@ -355,6 +370,11 @@ void vm_run(VM *vm)
         {
             uint32_t index = *(uint32_t *)&vm->code[vm->pc];
             vm->pc += 4;
+     //       FP validity check  
+                if (vm->fp + 2 >= vm->sp) {
+                    vm_error(vm, "LOAD_LOCAL: corrupted frame pointer");
+                    break;
+                }
 
             uint32_t nargs = vm->stack[vm->fp + 2];
 
@@ -365,6 +385,12 @@ void vm_run(VM *vm)
             }
 
             uint32_t slot = vm->fp - nargs + index;
+            //slots bound check
+            if (slot >= vm->stack_capacity) 
+            {
+                vm_error(vm, "LOAD_LOCAL: slot out of bounds");
+                break;
+            }
             vm_push(vm, vm->stack[slot]);
             break;
         }
@@ -435,16 +461,25 @@ void vm_run(VM *vm)
             // 3. push nargs (frame-local)
             vm_push(vm, nargs);
 
+            if (!vm->running)
+            break;
+
             // 4. establish new frame (FP → return PC)
             vm->fp = vm->sp - 3;
 
             // 5. jump
             vm->pc = addr;
+            printf("[CALL] FP=%d SP=%d locals=%d\n", vm->fp, vm->sp, nargs);
+
             break;
         }
 
         case OP_RET:
         {
+            if (vm->fp + 2 >= vm->sp) {
+            vm_error(vm, "RET: corrupted frame pointer");
+            break;
+        }
             int32_t ret = vm_pop(vm);
 
             uint32_t nargs = vm->stack[vm->fp + 2];
@@ -460,6 +495,8 @@ void vm_run(VM *vm)
 
             // return value
             vm_push(vm, ret);
+            printf("[RET ] FP=%d SP=%d\n", vm->fp, vm->sp);
+
             break;
         }
 

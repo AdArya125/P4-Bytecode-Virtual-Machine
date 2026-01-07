@@ -1,0 +1,25 @@
+PUSH 2      ; base
+PUSH 10     ; exp
+CALL power 2
+HALT
+power:
+; if exp == 0
+LOAD_LOCAL 1
+JZ pow_base
+
+; compute power(base, exp-1)
+LOAD_LOCAL 1
+PUSH 1
+SUB
+LOAD_LOCAL 0
+SWAP
+CALL power 2
+
+; multiply with base
+LOAD_LOCAL 0
+MUL
+RET
+
+pow_base:
+PUSH 1
+RET

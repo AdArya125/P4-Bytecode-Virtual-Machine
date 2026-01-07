@@ -1,0 +1,38 @@
+PUSH 6
+CALL fib 1
+HALT
+
+fib:
+LOAD_LOCAL 0
+DUP
+JZ fib_zero        ; if n == 0
+
+DUP
+PUSH 1
+SUB
+JZ fib_one         ; if n == 1
+
+; fib(n-1)
+DUP
+PUSH 1
+SUB
+CALL fib 1
+
+; fib(n-2)
+LOAD_LOCAL 0
+PUSH 2
+SUB
+CALL fib 1
+
+ADD
+RET
+
+fib_zero:
+DROP
+PUSH 0
+RET
+
+fib_one:
+DROP
+PUSH 1
+RET

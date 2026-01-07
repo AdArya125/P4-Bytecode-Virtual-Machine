@@ -1,0 +1,55 @@
+PUSH 5
+CALL trib 1
+HALT
+trib:
+LOAD_LOCAL 0
+DUP
+JZ trib_zero        ; n == 0
+
+DUP
+PUSH 1
+SUB
+JZ trib_one         ; n == 1
+
+DUP
+PUSH 2
+SUB
+JZ trib_two         ; n == 2
+
+; trib(n-1)
+DUP
+PUSH 1
+SUB
+CALL trib 1
+
+; trib(n-2)
+LOAD_LOCAL 0
+PUSH 2
+SUB
+CALL trib 1
+
+ADD                 ; t1 + t2
+
+; trib(n-3)
+LOAD_LOCAL 0
+PUSH 3
+SUB
+CALL trib 1
+
+ADD                 ; (t1+t2)+t3
+RET
+
+trib_zero:
+DROP
+PUSH 0
+RET
+
+trib_one:
+DROP
+PUSH 1
+RET
+
+trib_two:
+DROP
+PUSH 1
+RET

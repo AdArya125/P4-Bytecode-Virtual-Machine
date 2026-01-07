@@ -1,0 +1,34 @@
+PUSH 82913744
+PUSH 777344
+CALL gcd 2
+HALT
+
+gcd:
+; if b == 0 → done
+LOAD_LOCAL 1
+JZ gcd_done
+
+; if a < b → swap
+LOAD_LOCAL 0
+LOAD_LOCAL 1
+LT
+JZ gcd_sub
+
+; swap a and b
+LOAD_LOCAL 0
+LOAD_LOCAL 1
+STORE_LOCAL 0
+STORE_LOCAL 1
+JMP gcd
+
+gcd_sub:
+; a = a - b
+LOAD_LOCAL 0
+LOAD_LOCAL 1
+SUB
+STORE_LOCAL 0
+JMP gcd
+
+gcd_done:
+LOAD_LOCAL 0
+RET
