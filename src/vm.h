@@ -15,6 +15,7 @@ typedef enum {
     VAL_OBJ   //    object reference
 } ValueType;
 
+
 // now that the value type is defined we change the structure that stores it
 //structure will look somewhat like this
 
@@ -25,9 +26,27 @@ typedef struct {
     ValueType type;
     union {
         int32_t i;
-        void*   obj;   // heap doesnt exist yet so so string it as void for now
+        Obj*   obj;   // heap doesnt exist yet so so string it as void for now
     };
 } Value;
+
+
+
+// Object header (heap allocated)
+typedef struct Obj {
+    uint8_t marked;        // used later by GC
+    uint8_t type;          // object kind (future use)
+    uint16_t _pad;         // alignment
+    uint32_t size;         // total size of object
+    struct Obj *next;      // linked list of all objects
+} Obj;
+
+// Heap structure
+typedef struct {
+    Obj *objects;              // head of object list
+    size_t bytes_allocated;    // total allocated bytes
+    size_t next_gc;            // GC trigger threshold
+} Heap;
 
 //-----------------------------------------
 
@@ -60,6 +79,8 @@ typedef struct VM
     /* --- Global Data Segment --- */
     int32_t  *globals;
     uint32_t  globals_count;
+
+    Heap heap;  //LAB 5 Addon heap for dynamic memory allocation
 
     /* Execution state */
     int running;

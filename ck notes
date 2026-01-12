@@ -82,19 +82,101 @@ Step 6 – Test Harness Fix
 
 VM execution was correct, but results printed as 0
 
-Cause: main.c still assumed stack entries were int
+Cause: main.c still assumed stack entries were int (updated)
 
 Fixed result printing to extract Value.i
 
 Confirms that runtime representation changes propagate upward
 
-Final Invariant
+# Lab 5 – Heap & Object Model (Step 1)
 
-Stack contains only Value
+## What I just did 
 
-No raw integer assumptions anywhere
+- I decided **not to jump into GC directly**  
+  → First priority was to **introduce a heap cleanly** without breaking existing VM behavior.
 
-All control and data values are explicitly typed
+- The goal of this step was **structure, not functionality**  
+  → No allocation yet  
+  → No marking  
+  → No sweeping  
+  → All old tests must still pass
 
-VM is now GC-ready by construction
+---
 
+## 1. Introduced an Object Header (`Obj`)
+
+- I defined a minimal object header that every heap object will use.
+- I intentionally added fields *before* GC is implemented so layout stays stable later.
+
+Key design choices:
+- `marked` field exists early → avoids refactor during GC
+- `next` pointer → simple linked list for all heap objects
+- `size` → required for correct sweep/free later
+- padding added → avoids alignment issues in C
+
+---
+
+## 2. Added a Heap Structure
+
+- I created a `Heap` struct to centralize heap state.
+- Heap tracks:
+  - all allocated objects
+  - total bytes allocated
+  - GC trigger threshold
+
+This makes GC logic later **VM-driven**, not scattered.
+
+---
+
+## 3. Extended `Value` to support Objects
+
+- I kept `Value` explicit and type-safe.
+- Added `VAL_OBJ` alongside `VAL_INT`.
+- Used a union to store either:
+  - an integer
+  - or a pointer to `Obj`
+
+No helper macros yet — clarity over cleverness.
+
+---
+
+## 4. Integrated Heap into `VM`
+
+- I embedded `Heap` directly inside `VM`.
+- This was intentional:
+  - GC must see stack + globals + heap together
+  - VM owns all runtime memory
+
+This avoids global state and future hacks.
+
+---
+
+## 5. Heap Initialization in `vm_init`
+
+- Heap is initialized explicitly:
+  - object list starts empty
+  - allocation counter starts at zero
+  - GC threshold set to a safe default (1MB)
+
+No magic values — everything is visible and adjustable.
+
+---
+
+## 6. Clean Shutdown Handling (`vm_free`)
+
+- I updated `vm_free` to walk the heap object list and free everything.
+- This is **not GC**, just correct teardown.
+- Sweep logic later will intentionally resemble this.
+
+No memory leaks, no shortcuts.
+
+---
+
+## Result of this step
+
+- VM now has a heap, but does not use it yet.
+- No behavior change.
+- All existing tests still run.
+- Foundation is ready for allocation and GC.
+
+This step was about **future-proofing the runtime**, not adding features.

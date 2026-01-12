@@ -30,7 +30,7 @@ static void vm_dump_stack(VM *vm)
             printf("%d ", v.i);
         else
             printf("<obj> ");
-            
+
     }
 
     printf("\n");
@@ -127,6 +127,10 @@ void vm_init(VM *vm, uint8_t *code, size_t code_size)
 
     vm->running = 1;
     vm->trace = 0; // off by default
+    vm->heap.objects = NULL;
+    vm->heap.bytes_allocated = 0;
+    vm->heap.next_gc = 1024 * 1024 * 4; // assuming 4 MB should be sufficient for now
+
 }
 
 void vm_run(VM *vm)
@@ -781,6 +785,14 @@ void vm_run(VM *vm)
 // freeing VM here
 void vm_free(VM *vm)
 {
+    // free heap objects
+    Obj *obj = vm->heap.objects;
+    while (obj) {
+        Obj *next = obj->next;
+        free(obj);
+        obj = next;
+    }
+
     free(vm->globals);
     free(vm->stack);
 }
