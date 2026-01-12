@@ -187,10 +187,20 @@ int main(int argc, char **argv)
     double cpu_time_used = (double)(end - start) / CLOCKS_PER_SEC;
     printf("Executed %lu instructions in %.3f μs\n", vm.instr_count, cpu_time_used * 1000000);
 
-    if (vm.sp > 0)
-    {
-        printf("Result on stack: %d\n", vm.stack[vm.sp - 1]);
+    // if (vm.sp > 0)
+    // {
+        // printf("Result on stack: %d\n", vm.stack[vm.sp - 1]);
+        
+    // }
+    if (vm.sp > 0) {
+        Value v = vm.stack[vm.sp - 1];
+        if (v.type == VAL_INT) {
+            printf("Result on stack: %d\n", v.i);
+        } else {
+            printf("Result on stack: <non-int value>\n");
+        }
     }
+
 
     vm_free(&vm);
     free(program);

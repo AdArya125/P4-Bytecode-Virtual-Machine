@@ -24,38 +24,83 @@ static void vm_dump_stack(VM *vm)
     }
     for (uint32_t i = flag * (vm->sp - 10); i < vm->sp; i++)
     {
-        printf("%d ", vm->stack[i]);
+        // printf("%d ", vm->stack[i]);
+        Value v = vm->stack[i];
+        if (v.type == VAL_INT)
+            printf("%d ", v.i);
+        else
+            printf("<obj> ");
+            
     }
 
     printf("\n");
 }
 
 // basic push pop is done here with proper bound check
-static void vm_push(VM *vm, int32_t value)
-{
-    if (vm->sp >= vm->stack_capacity)
-    {
-        // fprintf(stderr, "Runtime error: stack overflow\n");
-        // vm->running = 0;
-        vm_error(vm, "stack overflow");
+// --------------- LAB 5 CHANGE HERE ----------------
+// static void vm_push(VM *vm, int32_t value)
+// {
+//     if (vm->sp >= vm->stack_capacity)
+//     {
+//         // fprintf(stderr, "Runtime error: stack overflow\n");
+//         // vm->running = 0;
+//         vm_error(vm, "stack overflow");
 
+//         return;
+//     }
+//     vm->stack[vm->sp++] = value; // stack pointer increment happens here
+// }
+// NOW WE WILL HAVE SEPERATE FUNCTIONS FOR INTEGER PUSH AND OBJ PUSH
+static void vm_push_int(VM *vm, int32_t value)
+{
+    if (vm->sp >= vm->stack_capacity) {
+        vm_error(vm, "stack overflow");
         return;
     }
-    vm->stack[vm->sp++] = value; // stack pointer increment happens here
+    vm->stack[vm->sp++] = (Value){
+        .type = VAL_INT,
+        .i = value
+    };
 }
 
-static int32_t vm_pop(VM *vm)
-{
-    if (vm->sp == 0)
-    {
-        // fprintf(stderr, "Runtime error: stack underflow\n");
-        // vm->running = 0;
-        vm_error(vm, "stack underflow");
 
-        return 0;
+
+// static int32_t vm_pop(VM *vm)
+// {
+//     if (vm->sp == 0)
+//     {
+//         // fprintf(stderr, "Runtime error: stack underflow\n");
+//         // vm->running = 0;
+//         vm_error(vm, "stack underflow");
+        
+//         return 0;
+//     }
+//     return vm->stack[--vm->sp];
+// }
+
+static Value vm_pop(VM *vm)
+{
+    if (vm->sp == 0) {
+        vm_error(vm, "stack underflow");
+        return (Value){ .type = VAL_INT, .i = 0 };
+        // ABOVE IS CALLED A COMPUND LITRAL (VALUE) {....} AMD .type = VAL_INT, .i = 0 → Designated initializers
+        // IT CREATES A TEMPORARY VALUE OBJECT WITH TYPE INT AND VALUE 0
+        // IT IS EQUIVALENT TO 
+//          Value temp;
+//          temp.type = VAL_INT;
+//          temp.i = 0;
+//          return temp;
+//The compound literal avoids the temporary variable entirely.
+// AS FOR INITIALIZERS
+//      - Initialize specific fields by name
+//      - Order does not matter
+//      - Unmentioned fields are zero-initialized
+// WE CAN ALSO PUT THEN AS  return (Value){ VAL_INT, 0 }; HOWEVER IF STRUCT ORDER CHANGE WE FACE BUGS THATS WHY WE DO DESIGNATED INITIALIZERS
     }
     return vm->stack[--vm->sp];
 }
+
+//------------------------------------------------------
 
 // initialise VM here
 void vm_init(VM *vm, uint8_t *code, size_t code_size)
@@ -73,7 +118,10 @@ void vm_init(VM *vm, uint8_t *code, size_t code_size)
     vm->pc = 0;
 
     vm->stack_capacity = STACK_MAX;
-    vm->stack = malloc(sizeof(int32_t) * STACK_MAX); // allocating stack to vm here
+    //lab 5 change here
+    //vm->stack = malloc(sizeof(int32_t) * STACK_MAX); // allocating stack to vm here
+    // now stack is of Value type
+    vm->stack = malloc(sizeof(Value) * STACK_MAX); // allocating stack to vm here
     vm->sp = 0;
     vm->fp = 0;
 
@@ -106,7 +154,9 @@ void vm_run(VM *vm)
             // operand is next 4 bytes (int32)
             int32_t value = *(int32_t *)&vm->code[vm->pc];
             vm->pc += 4;
-            vm_push(vm, value);
+            // vm_push(vm, value);
+            // LAB 5 CHANGE HERE
+            vm_push_int(vm, value);
             break;
 
         case OP_SWAP:
@@ -119,10 +169,17 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t a = vm->stack[vm->sp - 1];
-            int32_t b = vm->stack[vm->sp - 2];
+            // LAB 5 CHANGE HERE
+            // int32_t a = vm->stack[vm->sp - 1];
+            // int32_t b = vm->stack[vm->sp - 2];
+            // vm->stack[vm->sp - 1] = b;
+            // vm->stack[vm->sp - 2] = a;
+            Value a = vm->stack[vm->sp - 1];
+            Value b = vm->stack[vm->sp - 2];
+                    
             vm->stack[vm->sp - 1] = b;
             vm->stack[vm->sp - 2] = a;
+
             break;
         }
         case OP_DROP:
@@ -148,8 +205,19 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t v = vm->stack[vm->sp - 2];
-            vm_push(vm, v);
+            // LAB 5 CHANGE HERE
+            // vm_push(vm, v);
+            // int32_t v = vm->stack[vm->sp - 2];
+            // vm_push_int(vm, v);
+            Value v = vm->stack[vm->sp - 2];
+
+            if (v.type != VAL_INT) {
+                vm_error(vm, "OVER expects integer");
+                break;
+            }
+
+            vm_push_int(vm, v.i);
+
             break;
         }
 
@@ -157,34 +225,73 @@ void vm_run(VM *vm)
         // stack will be LIFO, order is done to mirror ALU semantics a+b and b+a is different for stack
         case OP_ADD:
         {
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, a + b);
+            //-------------- LAB 5 CHANGE HERE ----------------
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            // vm_push(vm, a + b);
+            // CHANGES I HAVE DONE HERE ARE SIMPLE, CHANGED TYPE TO VALUE, ADDED A CHECK TO CONFIRM THEY ARE INT WHEN POPPED
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+                  
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "ADD expects integers");
+                break;
+            }
+            
+            vm_push_int(vm, a.i + b.i);
+
+            // ------------------------------------------------
+
             break;
         }
 
         case OP_SUB:
         {
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, a - b);
+            // LAB 5 CHANGE HERE
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "SUB expects integers");
+                break;
+            }
+            // vm_push(vm, a - b);
+            vm_push_int(vm, a.i - b.i);
             break;
         }
 
         case OP_MUL:
         {
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, a * b);
+            // LAB 5 CHANGE HERE
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "MUL expects integers");
+                break;
+            }
+            // vm_push(vm, a * b);
+            // vm_push_int(vm, a * b);
+            vm_push_int(vm, a.i * b.i);
+
             break;
         }
 
         case OP_DIV:
         {
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
+            // LAB 5 CHANGE HERE
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "... expects integers");
+                break;
+            }
 
-            if (b == 0)
+            if (b.i == 0)
             {
                 // fprintf(stderr, "Runtime error: division by zero\n");
                 // vm->running = 0;
@@ -192,7 +299,9 @@ void vm_run(VM *vm)
                 break;
             }
 
-            vm_push(vm, a / b);
+            // vm_push(vm, a / b);
+            // LAB 5 CHANGE HERE
+            vm_push_int(vm, a.i / b.i );
             break;
         }
         case OP_DUP:
@@ -205,8 +314,17 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t v = vm->stack[vm->sp - 1];
-            vm_push(vm, v);
+            // int32_t v = vm->stack[vm->sp - 1];
+            Value v = vm->stack[vm->sp - 1];
+            if (v.type != VAL_INT) {
+                vm_error(vm, "expected integer");
+                break;
+            }
+            vm_push_int(vm, v.i);
+
+            // vm_push(vm, v);
+            // LAB 5 CHANGE HERE
+            // vm_push_int(vm, v);
             break;
         }
         case OP_INC:
@@ -219,7 +337,15 @@ void vm_run(VM *vm)
 
                 break;
             }
-            vm->stack[vm->sp - 1]++;
+            // vm->stack[vm->sp - 1]++;
+            Value *v = &vm->stack[vm->sp - 1];
+
+            if (v->type != VAL_INT) {
+                vm_error(vm, "INC/DEC/NEG expects integer");
+                break;
+            }
+            v->i += 1;
+
             break;
         }
         case OP_DEC:
@@ -232,7 +358,16 @@ void vm_run(VM *vm)
 
                 break;
             }
-            vm->stack[vm->sp - 1]--;
+            // vm->stack[vm->sp - 1]--
+            Value *v = &vm->stack[vm->sp - 1];
+
+            if (v->type != VAL_INT) {
+                vm_error(vm, "DEC expects integer");
+                break;
+            }
+
+            v->i -= 1;
+
             break;
         }
         case OP_NEG:
@@ -245,7 +380,16 @@ void vm_run(VM *vm)
 
                 break;
             }
-            vm->stack[vm->sp - 1] = -vm->stack[vm->sp - 1];
+            // vm->stack[vm->sp - 1] = -vm->stack[vm->sp - 1];
+            Value *v = &vm->stack[vm->sp - 1];
+
+            if (v->type != VAL_INT) {
+                vm_error(vm, "NEG expects integer");
+                break;
+            }
+
+            v->i = -v->i;
+
             break;
         }
         //------REL Ops--------
@@ -258,9 +402,19 @@ void vm_run(VM *vm)
                 vm_error(vm, "EQ needs 2 values");
                 break;
             }
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, (a == b) ? 1 : 0);
+            // LAB 5 CHANGE HERE
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "... expects integers");
+                break;
+            }
+            // vm_push(vm, (a == b) ? 1 : 0);
+            // vm_push_int(vm, (a == b) ? 1 : 0);
+            vm_push_int(vm, (a.i == b.i) ? 1 : 0);
+
             break;
         }
         case OP_LT:
@@ -273,9 +427,19 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, (a < b) ? 1 : 0);
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "LT expects integers");
+                break;
+            }
+            // vm_push(vm, (a < b) ? 1 : 0);
+            // LAB 5 CHANGE HERE
+            // vm_push_int(vm, (a < b) ? 1 : 0);
+            vm_push_int(vm, (a.i < b.i) ? 1 : 0);
+
             break;
         }
         case OP_GT:
@@ -288,9 +452,19 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t b = vm_pop(vm);
-            int32_t a = vm_pop(vm);
-            vm_push(vm, (a > b) ? 1 : 0);
+            // int32_t b = vm_pop(vm);
+            // int32_t a = vm_pop(vm);
+            Value b = vm_pop(vm);
+            Value a = vm_pop(vm);
+            if (a.type != VAL_INT || b.type != VAL_INT) {
+                vm_error(vm, "GT expects integers");
+                break;
+            }
+            // vm_push(vm, (a > b) ? 1 : 0);
+            // LAB 5 CHANGE HERE
+            // vm_push_int(vm, (a > b) ? 1 : 0);
+            vm_push_int(vm, (a.i > b.i) ? 1 : 0);
+
             break;
         }
 
@@ -309,8 +483,18 @@ void vm_run(VM *vm)
                 break;
             }
 
-            int32_t val = vm_pop(vm);
-            vm->globals[idx] = val;
+            // int32_t val = vm_pop(vm);
+            // Value val = vm_pop(vm);
+            // vm->globals[idx] = val;
+            Value val = vm_pop(vm);
+
+            if (val.type != VAL_INT) {
+                vm_error(vm, "STORE expects integer");
+                break;
+            }
+
+            vm->globals[idx] = val.i;
+
             break;
         }
 
@@ -328,7 +512,9 @@ void vm_run(VM *vm)
                 break;
             }
 
-            vm_push(vm, vm->globals[idx]);
+            // vm_push(vm, vm->globals[idx]);
+            // LAB 5 CHANGE HERE
+            vm_push_int(vm, vm->globals[idx]);
             break;
         }
         case OP_STORE_LOCAL:
@@ -336,7 +522,8 @@ void vm_run(VM *vm)
             uint32_t index = *(uint32_t *)&vm->code[vm->pc];
             vm->pc += 4;
 
-            int32_t value = vm_pop(vm);
+            // int32_t value = vm_pop(vm);
+            Value value = vm_pop(vm);
             //check for valid FP
              if (vm->fp + 2 >= vm->sp)
             {
@@ -344,7 +531,14 @@ void vm_run(VM *vm)
                 break;
             }
 
-            uint32_t nargs = vm->stack[vm->fp + 2];
+            // uint32_t nargs = vm->stack[vm->fp + 2];
+            Value nargs_val = vm->stack[vm->fp + 2];
+            if (nargs_val.type != VAL_INT) {
+                vm_error(vm, "corrupted frame");
+                break;
+            }
+            uint32_t nargs = nargs_val.i;
+
 
             if (index >= nargs)
             {
@@ -376,7 +570,14 @@ void vm_run(VM *vm)
                     break;
                 }
 
-            uint32_t nargs = vm->stack[vm->fp + 2];
+            // uint32_t nargs = vm->stack[vm->fp + 2];
+            Value nargs_val = vm->stack[vm->fp + 2];
+            if (nargs_val.type != VAL_INT) {
+                vm_error(vm, "corrupted frame");
+                break;
+            }
+            uint32_t nargs = nargs_val.i;
+
 
             if (index >= nargs)
             {
@@ -391,7 +592,18 @@ void vm_run(VM *vm)
                 vm_error(vm, "LOAD_LOCAL: slot out of bounds");
                 break;
             }
-            vm_push(vm, vm->stack[slot]);
+            // vm_push(vm, vm->stack[slot]);
+            // LAB 5 CHANGE HERE
+            // vm_push_int(vm, vm->stack[slot]);
+            Value v = vm->stack[slot];
+
+            if (v.type != VAL_INT) {
+                vm_error(vm, "LOAD_LOCAL expects integer");
+                break;
+            }
+
+            vm_push_int(vm, v.i);
+
             break;
         }
 
@@ -411,11 +623,23 @@ void vm_run(VM *vm)
             uint32_t addr = *(uint32_t *)&vm->code[vm->pc];
             vm->pc += 4;
 
-            int32_t cond = vm_pop(vm);
-            if (cond == 0)
-            {
+            // int32_t cond = vm_pop(vm);
+            // Value cond = vm_pop(vm);
+            // if (cond == 0)
+            // {
+            //     vm->pc = addr;
+            // }
+            Value cond = vm_pop(vm);
+
+            if (cond.type != VAL_INT) {
+                vm_error(vm, "JZ expects integer");
+                break;
+            }
+
+            if (cond.i == 0) {
                 vm->pc = addr;
             }
+
             // here however operand is part of instruction and if yhe condition is false execution continues after instruction
             // if true PC is overridden
             break;
@@ -436,8 +660,15 @@ void vm_run(VM *vm)
 
                 break;
             }
-            int32_t v = vm_pop(vm);
-            printf("PRINT: %d\n", v);
+            Value v = vm_pop(vm);
+            // printf("PRINT: %d\n", v);
+            if (v.type != VAL_INT) {
+                vm_error(vm, "PRINT expects integer");
+                break;
+            }
+
+            printf("PRINT: %d\n", v.i);
+
             break;
         }
         case OP_NOP:
@@ -453,13 +684,19 @@ void vm_run(VM *vm)
             vm->pc += 4;
 
             // 1. push return address
-            vm_push(vm, vm->pc);
+            // vm_push(vm, vm->pc);
+            // LAB 5 CHANGE HERE
+            vm_push_int(vm, vm->pc);
 
             // 2. push old FP
-            vm_push(vm, vm->fp);
+            // vm_push(vm, vm->fp);
+            // LAB 5 CHANGE HERE
+            vm_push_int(vm, vm->fp);
 
             // 3. push nargs (frame-local)
-            vm_push(vm, nargs);
+            // vm_push(vm, nargs);
+            // LAB 5 CHANGE HERE           
+            vm_push_int(vm, nargs);
 
             if (!vm->running)
             break;
@@ -480,11 +717,29 @@ void vm_run(VM *vm)
             vm_error(vm, "RET: corrupted frame pointer");
             break;
         }
-            int32_t ret = vm_pop(vm);
+            Value ret = vm_pop(vm);
 
-            uint32_t nargs = vm->stack[vm->fp + 2];
-            uint32_t old_fp = vm->stack[vm->fp + 1];
-            uint32_t ret_pc = vm->stack[vm->fp];
+            // uint32_t nargs = vm->stack[vm->fp + 2];
+            Value nargs_val = vm->stack[vm->fp + 2];
+            if (nargs_val.type != VAL_INT) {
+                vm_error(vm, "corrupted frame");
+                break;
+            }
+            uint32_t nargs = nargs_val.i;
+
+            // uint32_t old_fp = vm->stack[vm->fp + 1];
+            // uint32_t ret_pc = vm->stack[vm->fp];
+            Value old_fp_val = vm->stack[vm->fp + 1];
+            Value ret_pc_val = vm->stack[vm->fp];
+
+            if (old_fp_val.type != VAL_INT || ret_pc_val.type != VAL_INT) {
+                vm_error(vm, "corrupted frame");
+                break;
+            }
+
+            uint32_t old_fp = old_fp_val.i;
+            uint32_t ret_pc = ret_pc_val.i;
+
 
             // remove frame + arguments
             vm->sp = vm->fp - nargs;
@@ -494,7 +749,16 @@ void vm_run(VM *vm)
             vm->pc = ret_pc;
 
             // return value
-            vm_push(vm, ret);
+            // vm_push(vm, ret);
+            // LAB 5 CHANGE HERE
+            // vm_push_int(vm, ret);
+            if (ret.type != VAL_INT) {
+                vm_error(vm, "RET expects integer return");
+                break;
+            }
+
+            vm_push_int(vm, ret.i);
+
             printf("[RET ] FP=%d SP=%d\n", vm->fp, vm->sp);
 
             break;

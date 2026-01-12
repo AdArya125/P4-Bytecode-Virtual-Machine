@@ -1,0 +1,100 @@
+## Lab 5 – VM Refactor for Mark–Sweep GC (Notes)
+
+### Context
+- In Lab 4, the VM stack and globals used raw `int32_t`
+- This made integers, return PCs, frame pointers, and future heap references indistinguishable
+- A garbage collector cannot work with such ambiguity
+- So before adding GC, I first fixed the **runtime value representation**
+
+---
+
+### Design Decision
+- Every runtime value must be **self-describing**
+- The VM must never guess whether a value is data or a reference
+- This led to introducing **tagged values**
+
+---
+
+### Step 1 – Introduced `Value`
+- Added a `Value` struct with:
+  - `ValueType` (`VAL_INT`, `VAL_OBJ`)
+  - union holding either an `int32_t` or object pointer
+- `VAL_OBJ` is reserved for future heap objects
+- This keeps the design GC-ready without refactoring later
+
+---
+
+### Step 2 – Stack Representation Change
+- Replaced:
+  ```c
+  int32_t *stack;
+with:
+
+Value *stack;
+
+
+The stack now stores runtime values, not raw data
+
+Step 3 – Typed Push/Pop
+
+Removed generic vm_push
+
+Added:
+
+vm_push_int() for integers
+
+vm_pop() returning Value
+
+All stack reads now require explicit type inspection
+
+Step 4 – Instruction Audit
+
+Updated every instruction to:
+
+pop Value, not int
+
+check type == VAL_INT before arithmetic or branching
+
+Applied consistently to:
+
+arithmetic ops (ADD, SUB, MUL, DIV)
+
+unary ops (INC, DEC, NEG)
+
+relational ops (EQ, LT, GT)
+
+control flow (JZ, PRINT)
+
+Step 5 – Typed Call Frames
+
+Call frame layout unchanged:
+
+[ return_pc | old_fp | nargs | args... ]
+
+
+All metadata is now pushed as VAL_INT
+
+On RET, frame values are type-checked before use
+
+This keeps frames GC-scannable and safe
+
+Step 6 – Test Harness Fix
+
+VM execution was correct, but results printed as 0
+
+Cause: main.c still assumed stack entries were int
+
+Fixed result printing to extract Value.i
+
+Confirms that runtime representation changes propagate upward
+
+Final Invariant
+
+Stack contains only Value
+
+No raw integer assumptions anywhere
+
+All control and data values are explicitly typed
+
+VM is now GC-ready by construction
+
